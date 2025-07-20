@@ -1,0 +1,4 @@
+.venv
+.idea
+.configs*
+test_modules
