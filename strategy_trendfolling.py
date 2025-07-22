@@ -74,12 +74,12 @@ class TrendFolling:
             last_signals = df[-1:]
             print(last_signals)
             signal = 0
-            if ((last_signals["close"].values[0] > last_signals["MA50"].values[0])
-                    and (last_signals["MA50"].values[0] > last_signals["MA200"].values[0])
+            if ((last_signals["close"].values[0] > last_signals["MA_small"].values[0])
+                    and (last_signals["MA_small"].values[0] > last_signals["MA_long"].values[0])
                     and last_signals["RSI"].values[0] > 50):
                 signal = 1
-            if ((last_signals["close"].values[0] < last_signals["MA50"].values[0])
-                    # or (last_signals["MA50"] > last_signals["MA200"])
+            if ((last_signals["close"].values[0] < last_signals["MA_small"].values[0])
+                    # or (last_signals["MA_small"] > last_signals["MA_long"])
                     or last_signals["RSI"].values[0] < 50):
                 signal = -1
 
@@ -149,7 +149,7 @@ class TrendFolling:
             all_data["close"].append(quotation_to_decimal(candle.close))
 
         res = pd.DataFrame(data=all_data)
-        res["MA50"] = res["close"].rolling(self.MA_small).mean()  # 50
-        res["MA200"] = res["close"].rolling(self.MA_long).mean()  # 200
+        res["MA_small"] = res["close"].rolling(self.MA_small).mean()  # 50
+        res["MA_long"] = res["close"].rolling(self.MA_long).mean()  # 200
         res["RSI"] = self.calculate_RSI(res)
         return res
