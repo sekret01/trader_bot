@@ -8,7 +8,7 @@ from logger import Logger
 
 from tinkoff.invest import Client, CandleInterval, HistoricCandle
 from tinkoff.invest.constants import INVEST_GRPC_API_SANDBOX, INVEST_GRPC_API
-from tinkoff.invest.utils import now
+from tinkoff.invest.utils import now, money_to_decimal
 
 from set_config import TOKEN
 
@@ -21,6 +21,37 @@ class InfoRequester:
         self.client: Services = client
         self.target: INVEST_GRPC_API | INVEST_GRPC_API_SANDBOX = INVEST_GRPC_API  # режим обычный\песочница
         self.logger = Logger()
+
+
+    def get_money_amount_data(self, print_: bool = False):
+        """
+        Получение информации об имеющихся средствах на счете и их распределении
+        :param print_: нужно ли печатать таблицу результатов
+        :return: None
+        """
+        account_id = self.client.users.get_accounts().accounts[0].id
+        data = self.client.operations.get_portfolio(account_id=account_id)
+
+        space = 16
+        portfolio = float(money_to_decimal(data.total_amount_portfolio))
+        etf = float(money_to_decimal(data.total_amount_etf))
+        shares = float(money_to_decimal(data.total_amount_shares))
+        bounds = float(money_to_decimal(data.total_amount_bonds))
+        currencies = float(money_to_decimal(data.total_amount_currencies))
+        futures = float(money_to_decimal(data.total_amount_futures))
+        options = float(money_to_decimal(data.total_amount_options))
+        sp = float(money_to_decimal(data.total_amount_sp))
+
+        if print_:
+            top = f"|{"TOTAL":^{space}}|{"ETF":^{space}}|{"SHARES":^{space}}|{"BOUNDS":^{space}}|{"CURRENCIES":^{space}}|{"FUTURES":^{space}}|{"OPTIONS":^{space}}|{"sp":^{space}}|"
+            print('-' * len(top))
+            print(top)
+            print('-' * len(top))
+            print(f"|{portfolio:^{space}}|{etf:^{space}}|{shares:^{space}}|{bounds:^{space}}|{currencies:^{space}}|{futures:^{space}}|{options:^{space}}|{sp:^{space}}|")
+            print('-' * len(top))
+            print(f"total: [{portfolio}]  :: total in currency: [{currencies}]")
+
+
 
     def get_candles(
             self,
