@@ -2,3 +2,5 @@
 .idea
 .configs*
 test_modules
+*__pycache__*
+logs.log
