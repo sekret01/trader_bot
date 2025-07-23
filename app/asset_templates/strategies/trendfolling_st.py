@@ -1,7 +1,7 @@
 from tinkoff.invest import HistoricCandle
 from tinkoff.invest.utils import quotation_to_decimal
 
-from base_strategy import Strategy
+from .base_strategy import Strategy
 from app import Logger
 import pandas as pd
 

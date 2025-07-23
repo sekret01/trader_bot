@@ -1,8 +1,18 @@
+# configs
 .venv
 .idea
 .configs*
-test_modules
 *__pycache__*
-logs.log
+
+# tests
+test_modules
+test_run_modules.py
+
+
+# report files
 reports/market_data.csv
 reports/operation_data.csv
+
+# log files
+logs.log
+app/logs/main_logs.log

@@ -2,7 +2,7 @@ from __future__ import annotations
 import logging
 import datetime
 
-logging.basicConfig(filename="logs.log", format="<%(asctime)s> %(levelname)s: %(message)s", level=logging.INFO)
+logging.basicConfig(filename="app/logs/main_logs.log", format="<%(asctime)s> %(levelname)s: %(message)s", level=logging.INFO)
 
 
 class Logger:

@@ -1,14 +1,13 @@
 from datetime import timedelta
 from ..logger import Logger
+from .strategies import Strategy
 
 from tinkoff.invest import CandleInterval, InstrumentType, HistoricCandle, AioRequestError, OrderType, OrderDirection
 from tinkoff.invest.services import Services
 from tinkoff.invest.utils import now, quotation_to_decimal
 
-from typing import Optional
 import time
-import datetime
-import strategies
+
 
 
 class CandleTemplate:
@@ -24,7 +23,7 @@ class CandleTemplate:
             timeframe: CandleInterval,
             check_interval: int,
             type_: InstrumentType,
-            strategy: strategies.Strategy
+            strategy: Strategy
     ) -> None:
         """
         :param client: клиент для отправления запросов API
@@ -46,7 +45,7 @@ class CandleTemplate:
         self.timeframe: CandleInterval = timeframe
         self.check_interval: int = check_interval
         self.type_: InstrumentType = type_
-        self.strategy: strategies.Strategy = strategy
+        self.strategy: Strategy = strategy
         self.logger: Logger = Logger()
 
         self.candles: list[HistoricCandle] = []
@@ -143,8 +142,8 @@ class CandleTemplate:
                 trading_data.api_trade_available_flag and
                 trading_data.market_order_available_flag
             ):
-                if self.is_waiting_open:
-                    not self.is_waiting_open = True
+                if not self.is_waiting_open:
+                    self.is_waiting_open = True
                     self.logger.info(message=f"{self.name}:[{self.figi}] market close", module=__name__)
                 time.sleep(self.wait_time)
 
