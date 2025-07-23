@@ -1,8 +1,9 @@
 from datetime import timedelta
+from ..logger import Logger
 
 from tinkoff.invest import CandleInterval, InstrumentType, HistoricCandle, AioRequestError, OrderType, OrderDirection
 from tinkoff.invest.services import Services
-from tinkoff.invest.utils import now
+from tinkoff.invest.utils import now, quotation_to_decimal
 
 from typing import Optional
 import time
@@ -46,12 +47,15 @@ class CandleTemplate:
         self.check_interval: int = check_interval
         self.type_: InstrumentType = type_
         self.strategy: strategies.Strategy = strategy
-        # self.logger = ...
+        self.logger: Logger = Logger()
 
         self.candles: list[HistoricCandle] = []
         self.is_bought: bool = False
         self.is_waiting_open: bool = False
         self.wait_time: int = 60 * 10
+
+    def __repr__(self) -> str:
+        return f"{self.name}:[figi={self.figi}]"
 
     def start(self) -> None:
         """ Подготовка данных и запуск главного цикла """
@@ -68,12 +72,12 @@ class CandleTemplate:
 
                 self.strategy.prepare_data(candles=self.candles)
                 signal = self.strategy.get_signal()
-                # logger
+                self.logger.info(message=f"{self.__repr__()} candle data processed", module=__name__)
                 self.action(signal)
 
             except AioRequestError as ex:
-                # logger
-                ...
+                self.logger.error(message=f"{self.__repr__()} stop processing candle data: {ex}")
+
 
     def action(self, signal: int) -> None:
         """ Принятие решение на основе сигнала """
@@ -89,7 +93,9 @@ class CandleTemplate:
             )
             self.is_bought = True
             # print(f"\tПОКУПКА :: [{post_order_response.figi}] {post_order_response.initial_order_price}")
-            # logger
+            self.logger.info(message=f"{self.__repr__()} action:BUY amount:{self.amount} "
+                                     f"price:{float(quotation_to_decimal(post_order_response.initial_order_price))}",
+                             module=__name__)
 
         elif signal == -1 and self.is_bought:
             post_order_response = self.client.orders.post_order(
@@ -101,17 +107,21 @@ class CandleTemplate:
             )
             self.is_bought = False
             # print(f"\tПРОДАЖА :: [{post_order_response.figi}] {post_order_response.initial_order_price}")
-            # logger
+            self.logger.info(message=f"{self.__repr__()} action:SELL amount:{self.amount} "
+                                     f"price:{float(quotation_to_decimal(post_order_response.initial_order_price))}",
+                             module=__name__)
 
         else:
-            # logger
-            ...
+            self.logger.info(message=f"{self.__repr__()} action:SKIP",
+                             module=__name__)
 
         time.sleep(self.check_interval)
 
     def get_historic_candles(self) -> None:
         """ Получение свечей по заданным параметрам """
-        # logger
+        self.logger.info(message=f"{self.__repr__()} start getting candles",
+                         module=__name__)
+        i = 0
         for candle in self.client.get_all_candles(
             from_=now() - timedelta(days=self.days_back),
             to=now(),
@@ -121,7 +131,8 @@ class CandleTemplate:
             if not candle in self.candles:
                 # if candle.is_complete:
                 self.candles.append(candle)
-        # logger
+                i += 1
+        self.logger.info(message=f"{self.__repr__()} candles got:{i}", module=__name__)
 
     def wait_for_open_market(self):
         """ Ожидание открытия торгов, если они недоступны """
@@ -134,12 +145,12 @@ class CandleTemplate:
             ):
                 if self.is_waiting_open:
                     not self.is_waiting_open = True
-                    # logger
+                    self.logger.info(message=f"{self.name}:[{self.figi}] market close", module=__name__)
                 time.sleep(self.wait_time)
 
             else:
                 if self.is_waiting_open:
                     self.is_waiting_open = False
-                    # logger
+                    self.logger.info(message=f"{self.name}:[{self.figi}] market open", module=__name__)
                 return
 
