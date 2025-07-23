@@ -109,7 +109,7 @@ if __name__ == "__main__":
             "type_": InstrumentType.INSTRUMENT_TYPE_ETF
         },
     ]
-    DAYS_BACK = 1
+    DAYS_BACK = 30
     CHECK_INTERVAL = 1 * 60 * 60
     TOTAL_SUMMA = 5000
     # ===================================================

@@ -4,3 +4,5 @@
 test_modules
 *__pycache__*
 logs.log
+reports/market_data.csv
+reports/operation_data.csv

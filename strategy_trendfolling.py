@@ -10,6 +10,7 @@ import pandas as pd
 from logger import Logger
 from asset import Asset
 import os
+from csv_saver import CSV_Saver
 
 
 
@@ -22,7 +23,7 @@ class TrendFolling:
             timeframe: CandleInterval,
             check_interval: int,
             client: Services,
-            assets: list[Asset] = None
+            assets: list[Asset] = None,
     ):
         """
         :param days_back: с какого дня назад считать
@@ -40,29 +41,28 @@ class TrendFolling:
         self.info_requester = InfoRequester(self.client)  # ПЕСОЧНИЦА TRUE
         self.is_waiting = False
         self.logger = Logger()
+        self.saver = CSV_Saver()
 
         self.MA_small = 9  # 50
         self.MA_long = 15  # 200
 
 
     def start(self):
-        """ Подготовка данных к циклу """
+        """ Подготовка данных к основному циклу """
         if self.account_id is None:
             self.account_id = self.client.users.get_accounts().accounts[0].id
-
         self.main_loop()
 
     def add_asset(self, new_asset: Asset):
+        """ Добавление нового актива в список отслеживаемых """
         self.assets.append(new_asset)
 
     def main_loop(self):
         """ Основной цикл стратегии """
         while True:
-
             os.system('cls')
 
             for asset in self.assets:
-
                 is_avalible = self.wait_for_open_market(asset=asset)
                 if not is_avalible:
                     continue
@@ -96,6 +96,16 @@ class TrendFolling:
                     signal = -1
 
                 print(f"\t### SIGNAL: [{signal}]")
+                self.saver.write_operation_data(
+                    asset.name,
+                    asset.figi,
+                    self.MA_small,
+                    self.MA_long,
+                    last_signals["MA_small"].values[0],
+                    last_signals["MA_long"].values[0],
+                    last_signals["RSI"].values[0],
+                    signal
+                )
 
                 if signal == 1 and not asset.is_bought:
                     post_order_response = self.client.orders.post_order(
@@ -128,6 +138,7 @@ class TrendFolling:
             time.sleep(self.check_interval)
 
     def calculate_RSI(self, df: pd.DataFrame):
+        """ Функция расчета значения RSI для ряда свеч """
         window = 14  # для ETF
         delta = df["close"].diff()
         gain = delta.where(delta > 0, 0)
@@ -141,6 +152,12 @@ class TrendFolling:
         return rsi
 
     def wait_for_open_market(self, asset: Asset):
+        """ Функция проверки актива на возможность торговли """
+
+        # Переделать. Необходимо, что бы для каждого актива
+        # был свой счетчик ожидания, иначе они все будут по часу
+        # ждать, надо по 10 мин хотя бы
+
         while True:
             data = self.client.market_data.get_trading_status(figi=asset.figi)
             if (not data.api_trade_available_flag) or (not data.market_order_available_flag):
@@ -158,6 +175,7 @@ class TrendFolling:
                 return True
 
     def processed_candles(self, asset: Asset):
+        """ Создание таблицы с индикаторами MA и RSI, для определения сигнала """
         all_data = {
             "close": []
         }
