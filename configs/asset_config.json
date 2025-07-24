@@ -1,0 +1,13 @@
+[
+  {
+    "name": "TGLD",
+    "figi": "TCS10A101X50",
+    "amount": 160,
+    "days_back": 30,
+    "timeframe": 1,
+    "check_interval": 60,
+    "type": 4,
+    "strategy": "trendfollowing",
+    "template": "candle"
+  }
+]
