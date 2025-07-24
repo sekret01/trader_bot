@@ -1,6 +1,7 @@
 from datetime import timedelta
 from ..logger import Logger
 from .strategies import Strategy
+from .asset_template import AssetTemplate
 
 from tinkoff.invest import CandleInterval, InstrumentType, HistoricCandle, AioRequestError, OrderType, OrderDirection
 from tinkoff.invest.services import Services
@@ -10,7 +11,7 @@ import time
 
 
 
-class CandleTemplate:
+class CandleTemplate(AssetTemplate):
     """ Шаблон объекта актива, стратегия которого основана на получении данных свечей """
 
     def __init__(
@@ -35,7 +36,7 @@ class CandleTemplate:
         :param check_interval: временной интервал проверки свеч
         :param type_: тип актива (фонд, акция и тд)
         """
-
+        super().__init__()
         self.client: Services = client
         self.account_id: int | None = None
         self.figi: str = figi
@@ -53,18 +54,27 @@ class CandleTemplate:
         self.is_waiting_open: bool = False
         self.wait_time: int = 60 * 10
 
+        self._stop: bool = False
+
     def __repr__(self) -> str:
         return f"{self.name}:[figi={self.figi}]"
 
-    def start(self) -> None:
+    def run(self) -> None:
         """ Подготовка данных и запуск главного цикла """
         if self.account_id is None:
             self.account_id = self.client.users.get_accounts().accounts[0].id
+        self._stop = False
         self.main_loop()
+
+    def stop(self) -> None:
+        """ Остановка мониторинга """
+        self._stop = True
 
     def main_loop(self) -> None:
         """ Главный цикл мониторинга актива """
         while True:
+            if self._stop: break
+
             try:
                 self.wait_for_open_market()
                 self.get_historic_candles()
@@ -76,6 +86,8 @@ class CandleTemplate:
 
             except AioRequestError as ex:
                 self.logger.error(message=f"{self.__repr__()} stop processing candle data: {ex}")
+
+            time.sleep(self.check_interval)
 
 
     def action(self, signal: int) -> None:
@@ -91,7 +103,6 @@ class CandleTemplate:
                 direction=OrderDirection.ORDER_DIRECTION_BUY
             )
             self.is_bought = True
-            # print(f"\tПОКУПКА :: [{post_order_response.figi}] {post_order_response.initial_order_price}")
             self.logger.info(message=f"{self.__repr__()} action:BUY amount:{self.amount} "
                                      f"price:{float(quotation_to_decimal(post_order_response.initial_order_price))}",
                              module=__name__)
@@ -105,7 +116,6 @@ class CandleTemplate:
                 direction=OrderDirection.ORDER_DIRECTION_SELL
             )
             self.is_bought = False
-            # print(f"\tПРОДАЖА :: [{post_order_response.figi}] {post_order_response.initial_order_price}")
             self.logger.info(message=f"{self.__repr__()} action:SELL amount:{self.amount} "
                                      f"price:{float(quotation_to_decimal(post_order_response.initial_order_price))}",
                              module=__name__)
@@ -114,7 +124,6 @@ class CandleTemplate:
             self.logger.info(message=f"{self.__repr__()} action:SKIP",
                              module=__name__)
 
-        time.sleep(self.check_interval)
 
     def get_historic_candles(self) -> None:
         """ Получение свечей по заданным параметрам """

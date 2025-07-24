@@ -29,9 +29,10 @@ class TrendFollowing(Strategy):
 
         self.candle_df = pd.DataFrame(data)
         self.candle_df["MA_small"] = self.candle_df["close"].rolling(self.MA_small).mean()
-        self.candle_df["MA_small"] = self.candle_df["close"].rolling(self.MA_small).mean()
+        self.candle_df["MA_long"] = self.candle_df["close"].rolling(self.MA_long).mean()
         self.candle_df["RSI"] = self.calculate_rsi()
-        self.logger.info(message=f"{self.asset_info} indicators have been calculated")
+        self.logger.info(message=f"{self.asset_info} indicators have been calculated",
+                         module=__name__)
 
 
     def get_signal(self) -> int:
