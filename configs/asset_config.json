@@ -1,9 +1,42 @@
 [
   {
+    "name": "TITR@",
+    "figi": "TCS30A108BL2",
+    "amount": 160,
+    "days_back": 1,
+    "timeframe": 1,
+    "check_interval": 60,
+    "type": 4,
+    "strategy": "trendfollowing",
+    "template": "candle"
+  },
+    {
+    "name": "TRUR@",
+    "figi": "BBG000000001",
+    "amount": 110,
+    "days_back": 1,
+    "timeframe": 1,
+    "check_interval": 60,
+    "type": 4,
+    "strategy": "trendfollowing",
+    "template": "candle"
+  },
+    {
     "name": "TGLD",
     "figi": "TCS10A101X50",
-    "amount": 160,
-    "days_back": 30,
+    "amount": 100,
+    "days_back": 1,
+    "timeframe": 1,
+    "check_interval": 60,
+    "type": 4,
+    "strategy": "trendfollowing",
+    "template": "candle"
+  },
+    {
+    "name": "TRND",
+    "figi": "TCS00A10B0G9",
+    "amount": 110,
+    "days_back": 1,
     "timeframe": 1,
     "check_interval": 60,
     "type": 4,

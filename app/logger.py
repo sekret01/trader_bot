@@ -17,17 +17,20 @@ class Logger:
         return cls._instance
 
 
-    def info(self, message: str, module: str = ""):
+    def get_time(self, date: datetime.datetime) -> str:
+        return f"{date.hour}:{date.minute}:{date.second}"
+
+    def info(self, message: str, module: str):
         self.logger.info(module + " > " + message if module else message)
         if self.stream_out:
-            print(f"[{datetime.datetime.now().date()}] --INFO-- [{module}]: {message}")
+            print(f"[{datetime.datetime.now().date()}  {self.get_time(datetime.datetime.now())}] --INFO-- [{module}]: {message}")
 
-    def error(self, message: str, module: str = ""):
+    def error(self, message: str, module: str):
         self.logger.error(module + " > " + message if module else message)
         if self.stream_out:
-            print(f"[{datetime.datetime.now().date()}] !!-ERROR-!! [{module}]: {message}")
+            print(f"[{datetime.datetime.now().date()}  {self.get_time(datetime.datetime.now())}] !!-ERROR-!! [{module}]: {message}")
 
-    def warning(self, message: str, module: str = ""):
+    def warning(self, message: str, module: str):
         self.logger.warning(module + " > " + message if module else message)
         if self.stream_out:
-            print(f"[{datetime.datetime.now().date()}] <-WARNING-> [{module}]: {message}")
+            print(f"[{datetime.datetime.now().date()}  {self.get_time(datetime.datetime.now())}] <-WARNING-> [{module}]: {message}")

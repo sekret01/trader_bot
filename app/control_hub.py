@@ -25,8 +25,8 @@ STRATS = {
 class ControlHub:
     """ Класс, в котором происходят все настройки и запуск стратегий """
 
-    def __init__(self):
-        self.client: Services | SandboxService | None = None
+    def __init__(self, client: Services | SandboxService):
+        self.client: Services | SandboxService | None = client
         self.strategies_block: dict[str,list[AssetTemplate]] = {}
         self.logger: Logger = Logger()
 
@@ -44,9 +44,11 @@ class ControlHub:
             return
 
         for strategy_name, strategy_list in self.strategies_block.items():
-            self.logger.info(message=f"Starting strategy: [{strategy_name}]")
+            self.logger.info(message=f"Starting strategy: [{strategy_name}]",
+                             module=__name__)
             try:
                 for asset in strategy_list:
+                    asset.daemon = True  # для завершения работы со всеми потоками
                     asset.start()
                     # добавить сбор потоков для отслеживания статуса работы каждого
 
@@ -85,10 +87,7 @@ class ControlHub:
             self.logger.error(message=f"cant connect to client, type:{client_type}, token_name:{token_name}, ex::{ex} ",
                               module=__name__)
 
-        with current_client(token=token) as client:
-            self.set_strategies(client=client)
-
-    def set_strategies(self, client: Services) -> None:
+    def set_strategies(self) -> None:
         """
         Конструктор стратегий. Собирает strategies_block
         по конфигурационному листу, либо по последним
@@ -97,9 +96,11 @@ class ControlHub:
         try:
             with open("configs/asset_config.json", "r", encoding="utf-8") as file:
                 asset_data: dict = json.load(file)
-                self.logger.info(message=f"asset config data has been loaded")
+                self.logger.info(message=f"asset config data has been loaded",
+                                 module=__name__)
         except Exception as ex:
-            self.logger.error(message=f"error with load asset config data: {ex}")
+            self.logger.error(message=f"error with load asset config data: {ex}",
+                                 module=__name__)
             self.ready_for_work = False
             return
 
@@ -112,7 +113,7 @@ class ControlHub:
                 temp: type[AssetTemplate] = TEMPS[asset["template"]]
                 strat: type[Strategy] = STRATS[asset["strategy"]]
                 new_asset = temp(
-                    client=client,
+                    client=self.client,
                     figi=asset["figi"],
                     name=asset["name"],
                     amount=asset["amount"],
@@ -136,4 +137,5 @@ class ControlHub:
             self.ready_for_work = True
             if i == 0:
                 self.ready_for_work = False
-                self.logger.warning(message=f"there is not a single asset to monitor")
+                self.logger.warning(message=f"there is not a single asset to monitor",
+                                 module=__name__)
