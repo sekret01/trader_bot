@@ -58,7 +58,11 @@ class ControlHub:
 
     def stop_strategies(self):
         """ Остановка работы всех стратегий """
-        pass
+        for strategy, assets in self.strategies_block.items():
+            for thread in assets:
+                thread.stop()
+            self.logger.info(message=f"{strategy} >> STOP STRATEGY", module=__name__)
+
 
     def set_client(
             self,
