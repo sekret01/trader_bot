@@ -1,11 +1,14 @@
 from datetime import timedelta
+from typing import Literal
+
 from ..logger import Logger
 from .strategies import Strategy
 from .asset_template import AssetTemplate
+from ..csv_saver import CSV_Saver
 
 from tinkoff.invest import CandleInterval, InstrumentType, HistoricCandle, AioRequestError, OrderType, OrderDirection
 from tinkoff.invest.services import Services
-from tinkoff.invest.utils import now, quotation_to_decimal
+from tinkoff.invest.utils import now, quotation_to_decimal, money_to_decimal
 
 import time
 
@@ -53,6 +56,7 @@ class CandleTemplate(AssetTemplate):
         self.is_bought: bool = False
         self.is_waiting_open: bool = False
         self.wait_time: int = 60 * 10
+        self.saver: CSV_Saver | None = None
 
         self._stop: bool = False
 
@@ -63,6 +67,7 @@ class CandleTemplate(AssetTemplate):
         """ Подготовка данных и запуск главного цикла """
         if self.account_id is None:
             self.account_id = self.client.users.get_accounts().accounts[0].id
+        self.saver = CSV_Saver(self.client)
         self._stop = False
         self.main_loop()
 
@@ -93,6 +98,8 @@ class CandleTemplate(AssetTemplate):
     def action(self, signal: int) -> None:
         """ Принятие решение на основе сигнала """
         # вынести функции в отдельный класс
+        price = 0
+        operation: Literal["BUY", "SKIP", "SELL"] = "SKIP"
 
         if signal == 1 and not self.is_bought:
             post_order_response = self.client.orders.post_order(
@@ -106,6 +113,8 @@ class CandleTemplate(AssetTemplate):
             self.logger.info(message=f"{self.__repr__()} action:BUY amount:{self.amount} "
                                      f"price:{float(quotation_to_decimal(post_order_response.initial_order_price))}",
                              module=__name__)
+            price = float(quotation_to_decimal(post_order_response.initial_order_price))
+            operation = "BUY"
 
         elif signal == -1 and self.is_bought:
             post_order_response = self.client.orders.post_order(
@@ -119,10 +128,25 @@ class CandleTemplate(AssetTemplate):
             self.logger.info(message=f"{self.__repr__()} action:SELL amount:{self.amount} "
                                      f"price:{float(quotation_to_decimal(post_order_response.initial_order_price))}",
                              module=__name__)
+            price = float(quotation_to_decimal(post_order_response.initial_order_price))
+            operation = "SELL"
 
         else:
             self.logger.info(message=f"{self.__repr__()} action:SKIP",
                              module=__name__)
+
+        self.saver.write_market_data(
+            name=self.name,
+            figi=self.figi,
+            signal=signal,
+            operation=operation,
+            price=price,
+            amount=self.amount
+        )
+        self.saver.write_balance_data(
+            name=self.name,
+            figi=self.figi
+        )
 
 
     def get_historic_candles(self) -> None:

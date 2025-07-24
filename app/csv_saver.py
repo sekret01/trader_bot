@@ -13,7 +13,7 @@ class CSV_Saver:
         self.market_data_path: str = "reports/market_data.csv"
         self.balance_statistic_path: str = "reports/balance_statistic.csv"
         self.header_market = "date,time,name,figi,signal,operation,amount,price"
-        self.header_balance = "date,time,total,etf,shares,bounds,currencies,futures,options,sp"
+        self.header_balance = "date,time,name,figi,total,etf,shares,bounds,currencies,futures,options,sp"
         self.client: Services = client
         self._check_exists()
 
@@ -45,9 +45,9 @@ class CSV_Saver:
         with open(self.market_data_path, "a") as file:
             date_now = datetime.datetime.now()
             time_ = f"{date_now.hour}:{date_now.minute}:{date_now.second}"
-            file.write(f"{date_now.date()},{time_},{name},{figi},{signal},{operation},{price},{amount}\n")
+            file.write(f"{date_now.date()},{time_},{name},{figi},{signal},{operation},{amount},{price}\n")
 
-    def write_balance_data(self):
+    def write_balance_data(self, name: str, figi: str):
         """ Запись данных о балансе счета в csv """
         account_id = self.client.users.get_accounts().accounts[0].id
         data = self.client.operations.get_portfolio(account_id=account_id)
@@ -64,4 +64,4 @@ class CSV_Saver:
         with open(self.balance_statistic_path, "a") as file:
             date_now = datetime.datetime.now()
             time_ = f"{date_now.hour}:{date_now.minute}:{date_now.second}"
-            file.write(f"{date_now.date()},{time_},{portfolio},{etf},{shares},{bounds},{currencies},{futures},{options},{sp}\n")
+            file.write(f"{date_now.date()},{time_},{name},{figi},{portfolio},{etf},{shares},{bounds},{currencies},{futures},{options},{sp}\n")

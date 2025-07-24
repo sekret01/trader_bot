@@ -11,6 +11,7 @@ test_run_modules.py
 
 # report files
 reports/market_data.csv
+reports/balance_statistic.csv
 reports/operation_data.csv
 
 # log files
