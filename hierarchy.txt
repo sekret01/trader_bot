@@ -1,0 +1,36 @@
+
+ИЕРАРХИЯ ФАЙЛОВ ПРОГРАММЫ
+
+> trader_bot
+    > venv
+    > app
+        - __init__.py
+        - console.py
+        - control_hub.py
+        - csv_saver.py
+        - logger.py
+        > asset_templates
+            - __init__.py
+            - asset_template.py
+            - candle_template
+            > strategies
+                - __init__.py
+                - base_strategy.py
+                - trendfollowing_st.py
+        > logs
+            - empty (для хранения папки)
+            - main_logs.log (АВТО)
+        > visual
+            - __init__.py
+            - brush.py
+            - console_menu.py
+    > configs
+        - .configs.ini (добавить свои токены)
+        - asset_config.json (пока что саморучно)
+    > reports
+        - balance_statistic.csv (АВТО)
+        - market_data.csv (АВТО)
+
+    - hierarchy.txt (ДОП)
+    - .gitignore (ДОП)
+    - help_data.txt (ДОП)
