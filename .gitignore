@@ -17,3 +17,6 @@ reports/operation_data.csv
 # log files
 logs.log
 app/logs/main_logs.log
+
+# excel
+*.xlsx
