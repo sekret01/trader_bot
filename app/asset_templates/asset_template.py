@@ -12,3 +12,5 @@ class AssetTemplate(threading.Thread):
     def main_loop(self): pass
 
     def stop(self): pass
+
+    def full_info(self): pass

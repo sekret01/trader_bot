@@ -10,6 +10,7 @@ from . import Strategy
 from .asset_templates import TrendFollowing
 from .asset_templates import AssetTemplate, CandleTemplate
 from .logger import Logger
+from .assets_constructor import AssetsConstructor
 
 
 # вынести в отдельный модуль вместе с конструктором активов
@@ -29,6 +30,7 @@ class ControlHub:
         self.client: Services | SandboxService | None = client
         self.strategies_block: dict[str,list[AssetTemplate]] = {}
         self.logger: Logger = Logger()
+        self.assert_constructor: AssetsConstructor = AssetsConstructor(client)
 
         self.is_blocked: bool = False # блокировка на изменение настроек
         self.is_sandbox: bool = False # фз зачем вообще
@@ -99,7 +101,7 @@ class ControlHub:
         """
         try:
             with open("configs/asset_config.json", "r", encoding="utf-8") as file:
-                asset_data: dict = json.load(file)
+                asset_data: list[dict] = json.load(file)
                 self.logger.info(message=f"asset config data has been loaded",
                                  module=__name__)
         except Exception as ex:
@@ -112,21 +114,10 @@ class ControlHub:
         i = 0
         for asset in asset_data:
             try:
-                instrument: InstrumentType = InstrumentType(asset["type"])
-                timeframe: CandleInterval = CandleInterval(asset["timeframe"])
-                temp: type[AssetTemplate] = TEMPS[asset["template"]]
-                strat: type[Strategy] = STRATS[asset["strategy"]]
-                new_asset = temp(
-                    client=self.client,
-                    figi=asset["figi"],
-                    name=asset["name"],
-                    amount=asset["amount"],
-                    days_back=asset["days_back"],
-                    timeframe=timeframe,
-                    check_interval=asset["check_interval"],
-                    type_=instrument,
-                    strategy=strat(asset_info=f"[{asset["name"]}:{asset["figi"]}]")
-                )
+                new_asset = self.assert_constructor.construct_asset(**asset)
+                if new_asset is None:
+                    continue
+
                 if not asset["strategy"] in self.strategies_block.keys():
                     self.strategies_block[asset["strategy"]] = []
                 self.strategies_block[asset["strategy"]].append(new_asset)

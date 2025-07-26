@@ -21,6 +21,9 @@ class TrendFollowing(Strategy):
         self.logger: Logger = Logger()
         self.asset_info: str | None = asset_info
 
+    def __repr__(self) -> str:
+        return f"Strategy [TrendFollowing] :: parameters MA_small:{self.MA_small}, MA_long:{self.MA_long} RSI:14"
+
     def prepare_data(self, candles: list[HistoricCandle]) -> None:
         """ Подготовка индикаторов для последующего определения сигнала """
         data = {"close": []}

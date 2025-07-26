@@ -6,6 +6,9 @@ class Strategy(abc.ABC):
     def __init__(self, *args, **kwargs): pass
 
     @abc.abstractmethod
+    def __repr__(self): pass
+
+    @abc.abstractmethod
     def prepare_data(self, *args, **kwargs): pass
 
     @abc.abstractmethod

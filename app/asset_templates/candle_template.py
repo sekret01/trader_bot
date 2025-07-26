@@ -63,6 +63,12 @@ class CandleTemplate(AssetTemplate):
     def __repr__(self) -> str:
         return f"{self.name}:[figi={self.figi}]"
 
+    def full_info(self) -> str:
+        """ Подробная информация об активе """
+        return (f"{self.__repr__()} >> amount:{self.amount}, days_back:{self.days_back}, " +
+                f"check_interval:{self.check_interval} (timeframe=CandleInterval({self.timeframe})) "
+                f"strategy: {self.strategy.__repr__()}")
+
     def run(self) -> None:
         """ Подготовка данных и запуск главного цикла """
         if self.account_id is None:
