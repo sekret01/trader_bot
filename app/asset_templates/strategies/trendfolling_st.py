@@ -72,3 +72,28 @@ class TrendFollowing(Strategy):
         rs = avg_gain / avg_loss
         rsi = 100 - (100 / (1 + rs))
         return rsi
+
+    def get_all_candles_with_signals(self) -> pd.DataFrame:
+        """
+        Функция для тестирования стратегии,
+        считает сигнал для каждой свечи и возвращает таблицу значений целиком
+        """
+
+        df: pd.DataFrame = self.candle_df[:]
+        df["signal"] = 0
+        df.loc[
+            (df["close"] > df["MA_small"]) &
+            (df["MA_small"] > df["MA_long"]) &
+            (df["RSI"] > 50),
+            "signal"
+        ] = 1
+        df.loc[
+            (df["close"] < df["MA_long"]) |  # df["close"] < df["MA_small"]
+            (df["MA_small"] < df["MA_long"]) |
+            (df["RSI"] > 80) |
+            (df["RSI"] < 0),
+            "signal"
+        ] = -1
+
+        return df
+

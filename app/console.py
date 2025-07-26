@@ -1,13 +1,34 @@
 import os
+import configparser
+from decimal import Decimal
 
-from tinkoff.invest import Client
+from tinkoff.invest import Client, MoneyValue
 from tinkoff.invest.sandbox.client import SandboxClient
 from tinkoff.invest.services import Services
-import configparser
+from tinkoff.invest.utils import decimal_to_quotation
 
 from .visual import ConsoleMenu
 from .control_hub import ControlHub
 from .logger import Logger
+
+
+def add_money_sandbox(client, account_id, money, currency="rub"):
+    """Function to add money to sandbox account."""
+    money = decimal_to_quotation(Decimal(money))
+    return client.sandbox.sandbox_pay_in(
+        account_id=account_id,
+        amount=MoneyValue(units=money.units, nano=money.nano, currency=currency),
+    )
+
+def create_sandbox_account(client: Services):
+    sandbox_accounts = client.users.get_accounts()
+    for sandbox_account in sandbox_accounts.accounts:
+        client.sandbox.close_sandbox_account(account_id=sandbox_account.id)
+
+    # open new sandbox account
+    sandbox_account = client.sandbox.open_sandbox_account()
+    account_id = sandbox_account.account_id
+    add_money_sandbox(client=client, account_id=account_id, money=5000)
 
 
 class Console:
@@ -76,6 +97,9 @@ class Console:
         """ Меню во время работы бота """
         with self.client_type(self.token) as client:
             self.client = client
+
+            if self.client_type == SandboxClient:
+                create_sandbox_account(self.client)
 
             self.control_hub = ControlHub(client=self.client)
             self.control_hub.set_strategies()

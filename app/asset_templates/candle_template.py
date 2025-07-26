@@ -90,7 +90,7 @@ class CandleTemplate(AssetTemplate):
                 self.action(signal)
 
             except AioRequestError as ex:
-                self.logger.error(message=f"{self.__repr__()} stop processing candle data: {ex}")
+                self.logger.error(message=f"{self.__repr__()} stop processing candle data: {ex}", module=__name__)
 
             time.sleep(self.check_interval)
 
