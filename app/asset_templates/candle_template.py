@@ -6,7 +6,7 @@ from typing import Literal
 from .strategies import TrendFollowing
 from ..logger import Logger
 from .strategies import Strategy
-from .asset_template import AssetTemplate
+from ._asset_template import AssetTemplate
 from ..csv_saver import CSV_Saver
 
 from tinkoff.invest import CandleInterval, InstrumentType, HistoricCandle, AioRequestError, OrderType, OrderDirection

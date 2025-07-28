@@ -3,7 +3,7 @@ from __future__ import annotations
 from tinkoff.invest import HistoricCandle
 from tinkoff.invest.utils import quotation_to_decimal
 
-from .base_strategy import Strategy
+from ._base_strategy import Strategy
 from app import Logger
 import pandas as pd
 
