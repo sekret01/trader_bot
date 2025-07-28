@@ -1,6 +1,9 @@
+from __future__ import annotations
+
 from datetime import timedelta
 from typing import Literal
 
+from .strategies import TrendFollowing
 from ..logger import Logger
 from .strategies import Strategy
 from .asset_template import AssetTemplate
@@ -192,3 +195,47 @@ class CandleTemplate(AssetTemplate):
                     self.logger.info(message=f"{self.name}:[{self.figi}] market open", module=__name__)
                 return
 
+
+    def to_json(self) -> dict:
+        """ Преобразование объекта в json """
+        return {
+            "account_id": self.account_id,
+            "figi": self.figi,
+            "name": self.name,
+            "amount": self.amount,
+            "days_back": self.days_back,
+            "timeframe": self.timeframe,
+            "check_interval": self.check_interval,
+            "type_": self.type_,
+            "strategy": self.strategy.to_json(),
+            # "candles": self.candles,
+            "is_bought": self.is_bought,
+            "is_waiting_open": self.is_waiting_open,
+            "wait_time": self.wait_time,
+            "_stop": self._stop
+        }
+
+    @staticmethod
+    def from_json(data: dict, client: Services) -> CandleTemplate:
+        """ Преобразование json в объект CandleTemplate """
+        asset = CandleTemplate(
+            client=client,
+            figi=data["figi"],
+            name=data["name"],
+            amount=data["amount"],
+            days_back=data["days_back"],
+            timeframe=data["timeframe"],
+            check_interval=data["check_interval"],
+            type_=data["type_"],
+            strategy=TrendFollowing.from_json(data["strategy"]),  # ИЗМЕНИТЬ НА АВТООПРЕДЕЛЕНИЕ СТРАТЕГИИ
+        )
+
+        asset.account_id = data["account_id"]
+        asset.is_bought = data["is_bought"]
+        asset.is_waiting_open = data["is_waiting_open"]
+        asset.wait_time = data["wait_time"]
+        asset._stop = data["_stop"]
+        asset.logger = Logger()
+        asset.saver = CSV_Saver(client)
+
+        return asset

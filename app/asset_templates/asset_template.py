@@ -14,3 +14,7 @@ class AssetTemplate(threading.Thread):
     def stop(self): pass
 
     def full_info(self): pass
+
+    def to_json(self): pass
+
+    def from_json(self, *args, **kwargs): pass
