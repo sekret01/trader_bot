@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from tinkoff.invest import HistoricCandle
 from tinkoff.invest.utils import quotation_to_decimal
 
@@ -28,7 +30,8 @@ class TrendFollowing(Strategy):
         """ Подготовка индикаторов для последующего определения сигнала """
         data = {"close": []}
         for candle in candles:
-            data["close"].append(float(quotation_to_decimal(candle.close)))
+            if candle.is_complete:
+                data["close"].append(float(quotation_to_decimal(candle.close)))
 
         self.candle_df = pd.DataFrame(data)
         self.candle_df["MA_small"] = self.candle_df["close"].rolling(self.MA_small).mean()
@@ -99,4 +102,28 @@ class TrendFollowing(Strategy):
         ] = -1
 
         return df
+
+
+    def to_json(self) -> dict:
+        """ Преобразование данных объекта в json """
+        return {
+            "name": "TrendFollowing",
+            "MA_small": self.MA_small,
+            "MA_long": self.MA_long,
+            "asset_info": self.asset_info,
+            "candle_df": self.candle_df.to_json() if not self.candle_df is None else None
+        }
+
+    @staticmethod
+    def from_json(data: dict) -> TrendFollowing:
+        """ Преобразование json в объект """
+        strategy = TrendFollowing()
+        strategy.MA_long = data["MA_long"]
+        strategy.MA_small = data["MA_small"]
+        strategy.asset_info = data["asset_info"]
+        strategy.candle_df = pd.DataFrame(data=data["candle_df"])
+        strategy.logger = Logger()
+        strategy.logger.info(message=f"{strategy.asset_info} data loaded from json :: {strategy.__repr__()}",
+                             module=__name__)
+        return strategy
 

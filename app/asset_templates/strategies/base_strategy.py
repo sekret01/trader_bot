@@ -14,3 +14,9 @@ class Strategy(abc.ABC):
     @abc.abstractmethod
     def get_signal(self): pass
 
+    @abc.abstractmethod
+    def to_json(self): pass
+
+    @staticmethod
+    @abc.abstractmethod
+    def from_json(data: dict): pass
