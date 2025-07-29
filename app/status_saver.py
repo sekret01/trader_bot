@@ -12,7 +12,7 @@ class MessageSteck:
     _instance: MessageSteck = None
     _queue: list[dict] = []
     is_active: bool = False
-    write_path: str = "app/configs/status_save.json"
+    write_path: str = "configs/status_save.json"  # возможно положить в app
     logger = Logger()
 
     def __new__(cls, *args, **kwargs):
@@ -24,7 +24,7 @@ class MessageSteck:
     def put_message(self, message: dict) -> None:
         """ Функция для упаковки сообщения в очередь сообщений """
         self._queue.append(message)
-        self.logger.info(message=f"status from [{message.get("name")}:{message.get("figi")} accepted")
+        self.logger.info(message=f"status from [{message.get("name")}:{message.get("figi")}] accepted", module=__name__)
         if self.is_active:
             return
         self.is_active = True
@@ -51,6 +51,7 @@ class MessageSteck:
         def create_file():
             """ Создание файла """
             with open(self.write_path, 'w', encoding='utf-8') as correct_file:
+                correct_file.write('')
                 json.dump(dict(), correct_file)
 
             self.logger.warning(message="data was incorrect > new status-file created", module=__name__)
