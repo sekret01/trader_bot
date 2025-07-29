@@ -1,7 +1,7 @@
 # configs
 .venv
 .idea
-.configs*
+# .configs*
 configs/status_save.json
 *__pycache__*
 
