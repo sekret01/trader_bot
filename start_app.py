@@ -12,9 +12,12 @@
 
 
 import configparser
+from decimal import Decimal
 
-from tinkoff.invest import Client
+from tinkoff.invest import Client, MoneyValue
+from tinkoff.invest.services import Services
 from tinkoff.invest.sandbox.client import SandboxClient
+from tinkoff.invest.utils import decimal_to_quotation
 
 from app import ControlHub
 from app import Logger
@@ -52,6 +55,24 @@ def get_connect_data(configs: dict) -> tuple[type[Client], str] | None:
         LOGGER.error(message=f"NOT FOUND client type for start: [{configs["client_type"]}]. Stop launch", module=__name__)
         return None
 
+def add_money_sandbox(client, account_id, money, currency="rub"):
+    """Function to add money to sandbox account."""
+    money = decimal_to_quotation(Decimal(money))
+    return client.sandbox.sandbox_pay_in(
+        account_id=account_id,
+        amount=MoneyValue(units=money.units, nano=money.nano, currency=currency),
+    )
+
+def create_sandbox_account(client: Services):
+    sandbox_accounts = client.users.get_accounts()
+    for sandbox_account in sandbox_accounts.accounts:
+        client.sandbox.close_sandbox_account(account_id=sandbox_account.id)
+
+    # open new sandbox account
+    sandbox_account = client.sandbox.open_sandbox_account()
+    account_id = sandbox_account.account_id
+    add_money_sandbox(client=client, account_id=account_id, money=5000)
+
 
 def loop():
     while True:
@@ -67,6 +88,8 @@ def main():
 
     client_type, token = res
     with client_type(token=token) as client:
+        if client_type == SandboxClient:
+            create_sandbox_account(client)
         control_hub = ControlHub(client)
 
         # активы собираются либо по листу конфигураций,
