@@ -1,19 +1,92 @@
 [
   {
-    "name": "",
-    "figi": "",
-    "amount": 0,
-    "days_back": 0,
-    "timeframe": 0,
-    "check_interval": 0,
-    "type": 0,
-    "strategy": "=",
-    "template": "=",
+    "name": "TITR@",
+    "figi": "TCS30A108BL2",
+    "amount": 160,
+    "days_back": 30,
+    "timeframe": 9,
+    "check_interval": 1800,
+    "type": 4,
+    "strategy": "trendfollowing",
+    "template": "candle",
     "construct_data": {
-      "MA_small": 0,
-      "MA_long": 0
+      "MA_small": 10,
+      "MA_long": 20
+    }
+  },
+  {
+    "name": "TRUR",
+    "figi": "BBG000000001",
+    "amount": 110,
+    "days_back": 30,
+    "timeframe": 9,
+    "check_interval": 1800,
+    "type": 4,
+    "strategy": "trendfollowing",
+    "template": "candle",
+    "construct_data": {
+      "MA_small": 20,
+      "MA_long": 50
+    }
+  },
+  {
+    "name": "TGLD",
+    "figi": "TCS10A101X50",
+    "amount": 100,
+    "days_back": 30,
+    "timeframe": 4,
+    "check_interval": 3600,
+    "type": 4,
+    "strategy": "trendfollowing",
+    "template": "candle",
+    "construct_data": {
+      "MA_small": 10,
+      "MA_long": 20
+    }
+  },
+  {
+    "name": "TRND",
+    "figi": "TCS00A10B0G9",
+    "amount": 110,
+    "days_back": 30,
+    "timeframe": 9,
+    "check_interval": 1800,
+    "type": 4,
+    "strategy": "trendfollowing",
+    "template": "candle",
+    "construct_data": {
+      "MA_small": 50,
+      "MA_long": 100
+    }
+  },
+  {
+    "name": "TDIV@",
+    "figi": "TCS10A107563",
+    "amount": 110,
+    "days_back": 30,
+    "timeframe": 9,
+    "check_interval": 1800,
+    "type": 4,
+    "strategy": "trendfollowing",
+    "template": "candle",
+    "construct_data": {
+      "MA_small": 20,
+      "MA_long": 50
+    }
+  },
+  {
+    "name": "TLCB@",
+    "figi": "TCS20A107597",
+    "amount": 110,
+    "days_back": 30,
+    "timeframe": 9,
+    "check_interval": 1800,
+    "type": 4,
+    "strategy": "trendfollowing",
+    "template": "candle",
+    "construct_data": {
+      "MA_small": 10,
+      "MA_long": 20
     }
   }
-
-
 ]
