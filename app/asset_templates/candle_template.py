@@ -8,6 +8,7 @@ from ..logger import Logger
 from .strategies import Strategy
 from ._asset_template import AssetTemplate
 from ..csv_saver import CSV_Saver
+from ..status_saver import MessageSteck
 
 from tinkoff.invest import CandleInterval, InstrumentType, HistoricCandle, AioRequestError, OrderType, OrderDirection
 from tinkoff.invest.services import Services
@@ -54,6 +55,7 @@ class CandleTemplate(AssetTemplate):
         self.type_: InstrumentType = type_
         self.strategy: Strategy = strategy
         self.logger: Logger = Logger()
+        self.status_saver = MessageSteck()
 
         self.candles: list[HistoricCandle] = []
         self.is_bought: bool = False
@@ -156,6 +158,7 @@ class CandleTemplate(AssetTemplate):
             name=self.name,
             figi=self.figi
         )
+        self.status_saver.put_message(message=self.to_json())
 
 
     def get_historic_candles(self) -> None:

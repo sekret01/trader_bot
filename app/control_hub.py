@@ -65,34 +65,6 @@ class ControlHub:
                 thread.stop()
             self.logger.info(message=f"{strategy} >> STOP STRATEGY", module=__name__)
 
-
-    # def set_client(
-    #         self,
-    #         token: str,
-    #         client_type: Literal["standard", "sandbox"],
-    #         token_name: Optional[str] = "Unknown"
-    # ) -> None:
-    #     """
-    #     Подключение клиента по-заданному токену.
-    #     Данные подставлять из файла конфигураций.
-    #     :param token: Токен для подключения к счету
-    #     :param client_type: Тип клиента (обычный, песочница)
-    #     :param token_name: Название токена для идентификации (необязательно)
-    #     :return: None
-    #     """
-    #     current_client = Client if client_type == "standard" else SandboxClient
-    #     try:
-    #         with current_client(token=token) as client:
-    #             self.client = client
-    #             self.ready_for_work = True
-    #             self.logger.info(message=f"connect for client, type:{client_type}, token_name:{token_name}",
-    #                              module=__name__)
-    #
-    #     except AioRequestError as ex:
-    #         self.ready_for_work = False
-    #         self.logger.error(message=f"cant connect to client, type:{client_type}, token_name:{token_name}, ex::{ex} ",
-    #                           module=__name__)
-
     def set_strategies(self) -> None:
         """
         Конструктор стратегий. Собирает strategies_block
@@ -110,7 +82,6 @@ class ControlHub:
             self.ready_for_work = False
             return
 
-        # вынести в отдельный модуль вместе с конструктором активов
         i = 0
         for asset in asset_data:
             try:
