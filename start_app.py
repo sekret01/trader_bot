@@ -107,6 +107,7 @@ def main():
 
         LOGGER.info(message="start strategy", module=__name__)
         control_hub.run_strategies()
+        print("Начало работы")
 
         try:
             loop()
