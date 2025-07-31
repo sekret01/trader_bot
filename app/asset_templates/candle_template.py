@@ -9,6 +9,7 @@ from .strategies import Strategy
 from ._asset_template import AssetTemplate
 from ..csv_saver import CSV_Saver
 from ..status_saver import MessageSteck
+from ..broket_actions import TinkoffMarketOperations
 
 from tinkoff.invest import CandleInterval, InstrumentType, HistoricCandle, AioRequestError, OrderType, OrderDirection
 from tinkoff.invest.services import Services
@@ -62,6 +63,7 @@ class CandleTemplate(AssetTemplate):
         self.is_waiting_open: bool = False
         self.wait_time: int = 60 * 10
         self.saver: CSV_Saver | None = None
+        self.operation_controller = TinkoffMarketOperations(self.client)
 
         self._stop: bool = False
 
@@ -113,33 +115,21 @@ class CandleTemplate(AssetTemplate):
         operation: Literal["BUY", "SKIP", "SELL"] = "SKIP"
 
         if signal == 1 and not self.is_bought:
-            post_order_response = self.client.orders.post_order(
-                figi=self.figi,
-                quantity=self.amount,
-                account_id=self.account_id,
-                order_type=OrderType.ORDER_TYPE_MARKET,
-                direction=OrderDirection.ORDER_DIRECTION_BUY
-            )
+            post_order_response = self.operation_controller.buy_asset(self.figi, self.amount)
             self.is_bought = True
             self.logger.info(message=f"{self.__repr__()} action:BUY amount:{self.amount} "
-                                     f"price:{float(quotation_to_decimal(post_order_response.initial_order_price))}",
+                                     f"price:{float(money_to_decimal(post_order_response.initial_order_price))}",
                              module=__name__)
-            price = float(quotation_to_decimal(post_order_response.initial_order_price))
+            price = float(money_to_decimal(post_order_response.initial_order_price))
             operation = "BUY"
 
         elif signal == -1 and self.is_bought:
-            post_order_response = self.client.orders.post_order(
-                figi=self.figi,
-                quantity=self.amount,
-                account_id=self.account_id,
-                order_type=OrderType.ORDER_TYPE_MARKET,
-                direction=OrderDirection.ORDER_DIRECTION_SELL
-            )
+            post_order_response = self.operation_controller.sell_asset(self.figi, self.amount)
             self.is_bought = False
             self.logger.info(message=f"{self.__repr__()} action:SELL amount:{self.amount} "
-                                     f"price:{float(quotation_to_decimal(post_order_response.initial_order_price))}",
+                                     f"price:{float(money_to_decimal(post_order_response.initial_order_price))}",
                              module=__name__)
-            price = float(quotation_to_decimal(post_order_response.initial_order_price))
+            price = float(money_to_decimal(post_order_response.initial_order_price))
             operation = "SELL"
 
         else:

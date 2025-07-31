@@ -1,5 +1,6 @@
 from tinkoff.invest.services import Services
-from tinkoff.invest import OrderType, OrderDirection, PostOrderResponse
+from tinkoff.invest import OrderType, OrderDirection
+from tinkoff.invest.schemas import PostOrderResponse
 
 
 class TinkoffMarketOperations:
