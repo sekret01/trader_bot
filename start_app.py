@@ -50,7 +50,7 @@ def get_connect_data(configs: dict) -> tuple[type[Client], str] | None:
 
     elif configs["client_type"] == "sandbox":
         LOGGER.info(message=f"client type for start: [sandbox]", module=__name__)
-        return SandboxClient, PARSER["TOKENS"]["token"]
+        return SandboxClient, PARSER["TOKENS"]["sandbox"]
     else :
         LOGGER.error(message=f"NOT FOUND client type for start: [{configs["client_type"]}]. Stop launch", module=__name__)
         return None
