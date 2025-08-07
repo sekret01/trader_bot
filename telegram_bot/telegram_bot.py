@@ -7,12 +7,18 @@ version: 0.1
 import telebot
 from telebot import types
 import configparser
+from app import ControlHub
 
+CONTROL_HUB: ControlHub | None = None
+
+def set_control_hub(hub: ControlHub) -> None:
+    """ Установка модуля ControlHub """
+    CONTROL_HUB = hub
 
 def get_token() -> str:
     """ Получение токена """
     parser = configparser.ConfigParser()
-    parser.read("../configs/.configs.ini")  # без ../ в итоговом варианте
+    parser.read("configs/.configs.ini")
     return parser["TOKENS"]["telegram"]
 
 
@@ -31,15 +37,17 @@ main_menu.add(main_menu_btn_1, main_menu_btn_2, main_menu_btn_3, main_menu_btn_4
 
 def get_work_status() -> int:
     """ Получение статуса работы сервиса, авто настройка кнопки на панели """
-    pass
+    pr = configparser.ConfigParser()
+    pr.read("configs.start_app.ini")
+    return int(pr["WORK"]["working_status"])
 
 def stop_service() -> None:
     """ Остановка работы сервиса трейдинга """
-    pass
+    CONTROL_HUB.stop_strategies()
 
 def start_service() -> None:
     """ Запуск сервиса трейдинга """
-    pass
+    CONTROL_HUB.run_strategies()
 
 def get_market_report() -> ...:
     """ Создание отчета об операциях бота за день """
@@ -117,6 +125,7 @@ def other_messages(message):
 
 
 def start_bot():
+    print("start telegram bot")
     bot.polling(non_stop=True)
 
 

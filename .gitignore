@@ -8,7 +8,7 @@ configs/status_save.json
 # tests
 test_modules
 test_run_modules.py
-
+test_main.py
 
 # report files
 reports/market_data.csv
