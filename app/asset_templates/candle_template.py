@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import datetime
 from datetime import timedelta
 from typing import Literal
 
@@ -9,6 +10,7 @@ from .strategies import Strategy
 from ._asset_template import AssetTemplate
 from ..csv_saver import CSV_Saver
 from ..status_saver import MessageSteck
+from ..buffer_steck import BufferSteck
 from ..broket_actions import TinkoffMarketOperations
 
 from tinkoff.invest import CandleInterval, InstrumentType, HistoricCandle, AioRequestError, OrderType, OrderDirection
@@ -55,10 +57,13 @@ class CandleTemplate(AssetTemplate):
         self.check_interval: int = check_interval
         self.type_: InstrumentType = type_
         self.strategy: Strategy = strategy
+
         self.logger: Logger = Logger()
         self.status_saver = MessageSteck()
+        self.buffer_steck = BufferSteck()
 
         self.candles: list[HistoricCandle] = []
+        # self.operations_buff: list = []
         self.is_bought: bool = False
         self.is_waiting_open: bool = False
         self.wait_time: int = 60 * 10
@@ -149,7 +154,14 @@ class CandleTemplate(AssetTemplate):
             figi=self.figi
         )
         self.status_saver.put_message(message=self.to_json())
+        _time = datetime.datetime.now().time()
+        self.buffer_saver.put_message(
+            file_n="operations",
+            message=f"[<{_time}> [{self.name}] >> {operation} | {round(price, 2)}")
 
+    # def put_operation_in_buff(self, operation_type: Literal["BUY", "SELL"], price: float) -> None:
+    #     _time = datetime.datetime.now().time()
+    #     operation_string = f"[<{_time}> [{self.name}] >> {operation_type} | {round(price, 2)}"
 
     def get_historic_candles(self) -> None:
         """ Получение свечей по заданным параметрам """
