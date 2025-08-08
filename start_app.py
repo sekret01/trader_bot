@@ -24,6 +24,7 @@ from app import Logger
 from app import SandboxManager
 
 from telegram_bot import start_bot
+from telegram_bot import set_control_hub
 
 
 _start_config_path = "configs/start_app.ini"
@@ -120,6 +121,11 @@ def main():
         LOGGER.info(message="start strategy", module=__name__)
         control_hub.run_strategies()
         print("Начало работы")
+
+        # начало работы тг-бота
+        start_bot()
+        set_control_hub(control_hub)
+
 
         try:
             loop()

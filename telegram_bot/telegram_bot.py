@@ -60,19 +60,20 @@ def start_service() -> None:
 
 def get_market_report() -> ...:
     """ Создание отчета об операциях бота за день """
+    
     buff_data = []
     buf_path: Path = BUFF_DIR / BUFF_OPERATION
     with buf_path.open(mode="r", encoding='utf-8') as file:
+        i = 0
         while True:
-            i = 0
-            line = file.readline
+            line = file.readline()
             if not line:
                 break
             buff_data.append(line)
             i += 1
             if i >= 500:
                 break
-    report = "\n".join(buf_path)
+    report = "".join(buff_data)
     bot.send_message(CLIENT_ID, f"ОТЧЕТ О РАБОТЕ ЗА {datetime.datetime.now().date()}")
     bot.send_message(CLIENT_ID, report)
 
@@ -90,16 +91,11 @@ def load_logs() -> ...:
 
 
 
-
-"""
-main_menu.keyboard[0][0]['text'] = "qweqweqwe"
-print(main_menu.keyboard[0][0])
-"""
-
 # MESSAGES
 
 @bot.message_handler(commands=['start'])
 def start(message):
+    global CLIENT_ID
     CLIENT_ID = message.chat.id
     bot.send_message(message.chat.id, 'Welcome to trader bot!', reply_markup=main_menu)
 
@@ -123,9 +119,9 @@ def other_messages(message):
         get_balance_report()
         ... 
     elif message.text == "отчет об операциях":
-        bot.reply_to(message, "отчет об операциях (недоступно)")
+        bot.reply_to(message, "отчет об операциях")
         get_market_report()
-        ...
+        
     elif message.text == "получить csv-отчеты":
         bot.reply_to(message, "получить csv-отчеты (недоступно)")
         load_csv_reports()

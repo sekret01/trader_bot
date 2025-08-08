@@ -11,7 +11,7 @@ from ._asset_template import AssetTemplate
 from ..csv_saver import CSV_Saver
 from ..status_saver import MessageSteck
 from ..buffer_steck import BufferSteck
-from ..broket_actions import TinkoffMarketOperations
+from ..broker_actions import TinkoffMarketOperations
 
 from tinkoff.invest import CandleInterval, InstrumentType, HistoricCandle, AioRequestError, OrderType, OrderDirection
 from tinkoff.invest.services import Services
@@ -158,7 +158,7 @@ class CandleTemplate(AssetTemplate):
         _time = datetime.datetime.now().time()
         self.buffer_steck.put_message(
             file_n="operations",
-            message=f"<{_time}> [{self.name}] >> {operation} | {round(price, 2)}")
+            message=f"<{_time.hour}:{_time.minute}:{_time.second}> [{self.name}] >> {operation} | {round(price, 2)}")
 
     # def put_operation_in_buff(self, operation_type: Literal["BUY", "SELL"], price: float) -> None:
     #     _time = datetime.datetime.now().time()
