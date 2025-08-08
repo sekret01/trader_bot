@@ -158,7 +158,7 @@ class CandleTemplate(AssetTemplate):
         _time = datetime.datetime.now().time()
         self.buffer_steck.put_message(
             file_n="operations",
-            message=f"[<{_time}> [{self.name}] >> {operation} | {round(price, 2)}")
+            message=f"<{_time}> [{self.name}] >> {operation} | {round(price, 2)}")
 
     # def put_operation_in_buff(self, operation_type: Literal["BUY", "SELL"], price: float) -> None:
     #     _time = datetime.datetime.now().time()
