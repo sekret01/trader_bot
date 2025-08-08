@@ -8,8 +8,14 @@ import telebot
 from telebot import types
 import configparser
 from app import ControlHub
+from pathlib import Path
+import datetime
+# from app import TinkoffDataGetter
 
 CONTROL_HUB: ControlHub | None = None
+BUFF_DIR = Path("app/buff")
+BUFF_OPERATION = "operations"
+
 
 def set_control_hub(hub: ControlHub) -> None:
     """ Установка модуля ControlHub """
@@ -24,10 +30,11 @@ def get_token() -> str:
 
 token = get_token()
 bot = telebot.TeleBot(token)
+CLIENT_ID: int | str = ""
 
 main_menu = types.ReplyKeyboardMarkup(row_width=2)
 main_menu_btn_1 = types.KeyboardButton("включить")  # text="Статус", callback_data="status")
-main_menu_btn_2 = types.KeyboardButton("выключить")
+main_menu_btn_2 = types.KeyboardButton("очистка логов")
 main_menu_btn_3 = types.KeyboardButton("отчет о балансе")
 main_menu_btn_4 = types.KeyboardButton("отчет об операциях")
 main_menu_btn_5 = types.KeyboardButton("получить csv-отчеты")
@@ -44,14 +51,30 @@ def get_work_status() -> int:
 def stop_service() -> None:
     """ Остановка работы сервиса трейдинга """
     CONTROL_HUB.stop_strategies()
+    main_menu.keyboard[0][0].text = "включить"
 
 def start_service() -> None:
     """ Запуск сервиса трейдинга """
     CONTROL_HUB.run_strategies()
+    main_menu.keyboard[0][0].text = "выключить"
 
 def get_market_report() -> ...:
     """ Создание отчета об операциях бота за день """
-    pass
+    buff_data = []
+    buf_path: Path = BUFF_DIR / BUFF_OPERATION
+    with buf_path.open(mode="r", encoding='utf-8') as file:
+        while True:
+            i = 0
+            line = file.readline
+            if not line:
+                break
+            buff_data.append(line)
+            i += 1
+            if i >= 500:
+                break
+    report = "\n".join(buf_path)
+    bot.send_message(CLIENT_ID, f"ОТЧЕТ О РАБОТЕ ЗА {datetime.datetime.now().date()}")
+    bot.send_message(CLIENT_ID, report)
 
 def get_balance_report() -> ...:
     """ Создание отчета о балансе счета и распределении активов на данный момент """
@@ -77,32 +100,38 @@ print(main_menu.keyboard[0][0])
 
 @bot.message_handler(commands=['start'])
 def start(message):
+    CLIENT_ID = message.chat.id
     bot.send_message(message.chat.id, 'Welcome to trader bot!', reply_markup=main_menu)
 
 @bot.message_handler(func=lambda message: True)
 def other_messages(message):
 
     if message.text == "выключить":
-        bot.reply_to(message, "Выключение сервиса...")
         stop_service()
+        bot.reply_to(message, "Сервис остановлен", reply_markdown=main_menu)
+        
     elif message.text == "включить":
-        bot.reply_to(message, "Включение сервиса...")
         start_service()
+        bot.reply_to(message, "Сервис запущен", reply_markdown=main_menu)
+    
+    elif message.text == "очистка логов":
+        bot.reply_to(message, "Очистка логов (недоступно)")
+        ...
 
     elif message.text == "отчет о балансе":
-        bot.reply_to(message, "отчет о балансе")
+        bot.reply_to(message, "отчет о балансе (недоступно)")
         get_balance_report()
         ... 
     elif message.text == "отчет об операциях":
-        bot.reply_to(message, "отчет об операциях")
+        bot.reply_to(message, "отчет об операциях (недоступно)")
         get_market_report()
         ...
     elif message.text == "получить csv-отчеты":
-        bot.reply_to(message, "получить csv-отчеты")
+        bot.reply_to(message, "получить csv-отчеты (недоступно)")
         load_csv_reports()
         ...
     elif message.text == "получить log-файл":
-        bot.reply_to(message, "получить log-файл")
+        bot.reply_to(message, "получить log-файл (недоступно)")
         load_logs()
         ...
 

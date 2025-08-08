@@ -23,6 +23,8 @@ from app import ControlHub
 from app import Logger
 from app import SandboxManager
 
+from telegram_bot import start_bot
+
 
 _start_config_path = "configs/start_app.ini"
 _token_konfig_path = "configs/.configs.ini"

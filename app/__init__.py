@@ -12,6 +12,7 @@ from .asset_templates import Strategy, TrendFollowing
 from .control_hub import ControlHub
 from .csv_saver import CSV_Saver
 from .sandbox import SandboxManager
+from .broker_actions import TinkoffDataGetter
 
 if PLATFORM == "Windows":
     from .console import Console
