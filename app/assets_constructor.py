@@ -30,9 +30,10 @@ from .logger import Logger
 class AssetsConstructor:
     """ Класс для создания объектов стратегий по конфигурациям """
 
-    def __init__(self, client: Services) -> None:
+    def __init__(self, client: Services, account_id: str) -> None:
         self.logger = Logger()
         self.client: Services = client
+        self.account_id = account_id
 
         # расширять по мере добавления новых шаблонов
         self.templates: dict[str, type[AssetTemplate]] = {
@@ -122,6 +123,7 @@ class AssetsConstructor:
         """ Создание объекта актива по шаблону CandleTemplate """
         return CandleTemplate(
             client=self.client,
+            account_id=self.account_id,
             figi=row_data["figi"],
             name=row_data["name"],
             amount=row_data["amount"],

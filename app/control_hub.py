@@ -26,11 +26,12 @@ STRATS = {
 class ControlHub:
     """ Класс, в котором происходят все настройки и запуск стратегий """
 
-    def __init__(self, client: Services | SandboxService):
+    def __init__(self, client: Services | SandboxService, account_id: str):
         self.client: Services | SandboxService | None = client
+        self.account_id: str = account_id
         self.strategies_block: dict[str,list[AssetTemplate]] = {}
         self.logger: Logger = Logger()
-        self.assert_constructor: AssetsConstructor = AssetsConstructor(client)
+        self.assert_constructor: AssetsConstructor = AssetsConstructor(client, account_id)
 
         self.is_blocked: bool = False # блокировка на изменение настроек
         self.is_sandbox: bool = False # фз зачем вообще

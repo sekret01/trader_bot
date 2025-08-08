@@ -6,9 +6,9 @@ from tinkoff.invest.schemas import PostOrderResponse
 class TinkoffMarketOperations:
     """ Класс для проведения основных торговых операций """
 
-    def __init__(self, client: Services):
+    def __init__(self, client: Services, account_id: str):
         self.client = client
-        self.account_id = self.client.users.get_accounts().accounts[0].id
+        self.account_id = account_id
 
     def buy_asset(self, figi: str, amount: int) -> PostOrderResponse:
         """

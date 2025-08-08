@@ -27,6 +27,7 @@ class CandleTemplate(AssetTemplate):
     def __init__(
             self,
             client: Services,
+            account_id: str,
             figi: str,
             name: str,
             amount: int,
@@ -48,7 +49,7 @@ class CandleTemplate(AssetTemplate):
         """
         super().__init__()
         self.client: Services = client
-        self.account_id: int | None = None
+        self.account_id: str = account_id
         self.figi: str = figi
         self.name: str = name
         self.amount: int = amount
@@ -68,7 +69,7 @@ class CandleTemplate(AssetTemplate):
         self.is_waiting_open: bool = False
         self.wait_time: int = 60 * 10
         self.saver: CSV_Saver | None = None
-        self.operation_controller = TinkoffMarketOperations(self.client)
+        self.operation_controller = TinkoffMarketOperations(self.client, account_id=account_id)
 
         self._stop: bool = False
 
@@ -83,9 +84,9 @@ class CandleTemplate(AssetTemplate):
 
     def run(self) -> None:
         """ Подготовка данных и запуск главного цикла """
-        if self.account_id is None:
-            self.account_id = self.client.users.get_accounts().accounts[0].id
-        self.saver = CSV_Saver(self.client)
+        # if self.account_id is None:
+        #     self.account_id = self.client.users.get_accounts().accounts[0].id
+        self.saver = CSV_Saver(self.client, self.account_id)
         self._stop = False
         self.main_loop()
 
@@ -155,7 +156,7 @@ class CandleTemplate(AssetTemplate):
         )
         self.status_saver.put_message(message=self.to_json())
         _time = datetime.datetime.now().time()
-        self.buffer_saver.put_message(
+        self.buffer_steck.put_message(
             file_n="operations",
             message=f"[<{_time}> [{self.name}] >> {operation} | {round(price, 2)}")
 
