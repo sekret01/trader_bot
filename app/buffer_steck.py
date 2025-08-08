@@ -1,5 +1,6 @@
 from __future__ import annotations
 from pathlib import Path
+import datetime
 
 
 class BufferSteck:
@@ -9,7 +10,8 @@ class BufferSteck:
     _instance: BufferSteck = None
     _queue: list[dict] = []
     is_active: bool = False
-    buffer_folder: str = Path("app/buff")  # возможно положить в app
+    buffer_folder: str = Path("app/buff")
+    last_date: datetime.date = datetime.datetime.now().date()
 
     def __new__(cls, *args, **kwargs):
         if cls._instance is None:
@@ -28,8 +30,12 @@ class BufferSteck:
     def _write_data(self) -> None:
         """ Запись данных из очереди сообщений """
         while len(self._queue) > 0:
-            buff_data = self._queue.pop(0)
             file_path: Path = self.buffer_folder / buff_data["file"]
+            date_now = datetime.datetime.now().date()
+            if date_now != self.last_date:
+                self._clear_file(file_path)
+
+            buff_data = self._queue.pop(0)
             self._check_file(file_path)
             msg = buff_data["message"]
 
@@ -42,4 +48,9 @@ class BufferSteck:
         """ Проверка существования файла сохранения и правильности его данных """
         if not file_path.exists():
             file_path.touch()
+    
+    def _clear_file(self, file_path: Path) -> None:
+        """ Очистка данных буффера по окончанию срока хранения """
+        file_path.write_text("")
+
 
