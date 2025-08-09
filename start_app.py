@@ -123,8 +123,9 @@ def main():
         print("Начало работы")
 
         # начало работы тг-бота
-        start_bot()
         set_control_hub(control_hub)
+        start_bot()
+        
 
 
         try:

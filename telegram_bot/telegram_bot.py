@@ -10,16 +10,20 @@ import configparser
 from app import ControlHub
 from pathlib import Path
 import datetime
+from app import TinkoffDataGetter
 # from app import TinkoffDataGetter
 
 CONTROL_HUB: ControlHub | None = None
 BUFF_DIR = Path("app/buff")
 BUFF_OPERATION = "operations"
+DATA_GETTER: TinkoffDataGetter = None
 
 
 def set_control_hub(hub: ControlHub) -> None:
     """ Установка модуля ControlHub """
+    global CONTROL_HUB, DATA_GETTER
     CONTROL_HUB = hub
+    DATA_GETTER = TinkoffDataGetter(CONTROL_HUB.client, CONTROL_HUB.account_id)
 
 def get_token() -> str:
     """ Получение токена """
@@ -79,7 +83,14 @@ def get_market_report() -> ...:
 
 def get_balance_report() -> ...:
     """ Создание отчета о балансе счета и распределении активов на данный момент """
-    pass
+    bot.send_message(CLIENT_ID, f"ОТЧЕТ О СОСТОЯНИИ БАЛАНСА\n[{str(datetime.datetime.now())}]")
+    report_data = DATA_GETTER.get_balance()
+    
+    for instrument_type, instruments in report_data.items():
+        bot.send_message(CLIENT_ID, f"инструмент {instrument_type.upper()}")
+        for instr in instruments:
+            rep_str = f"{instr["ticker"]} [{instr["figi"]}]\namount: {instr["amount"]}\n{instr["cur_price_for_one"]} руб >> {instr["cur_price"]} руб"
+            bot.send_message(CLIENT_ID, rep_str)
 
 def load_csv_reports() -> ...:
     """ Загрузка csv-данных, хранящихся на сервере (файлы balance_data.csv и market_data.csv) """
@@ -115,9 +126,9 @@ def other_messages(message):
         ...
 
     elif message.text == "отчет о балансе":
-        bot.reply_to(message, "отчет о балансе (недоступно)")
+        bot.reply_to(message, "отчет о балансе")
         get_balance_report()
-        ... 
+        
     elif message.text == "отчет об операциях":
         bot.reply_to(message, "отчет об операциях")
         get_market_report()
