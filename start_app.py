@@ -12,6 +12,8 @@
 
 
 import configparser
+import threading
+import time
 from decimal import Decimal
 
 from tinkoff.invest import Client, MoneyValue
@@ -25,6 +27,7 @@ from app import SandboxManager
 
 from telegram_bot import start_bot
 from telegram_bot import set_control_hub
+from telegram_bot import stop_bot
 
 
 _start_config_path = "configs/start_app.ini"
@@ -61,28 +64,11 @@ def get_connect_data(configs: dict) -> tuple[type[Client], str] | None:
         LOGGER.error(message=f"NOT FOUND client type for start: [{configs["client_type"]}]. Stop launch", module=__name__)
         return None
 
-# def add_money_sandbox(client, account_id, money, currency="rub"):
-#     """Function to add money to sandbox account."""
-#     money = decimal_to_quotation(Decimal(money))
-#     return client.sandbox.sandbox_pay_in(
-#         account_id=account_id,
-#         amount=MoneyValue(units=money.units, nano=money.nano, currency=currency),
-#     )
-
-# def create_sandbox_account(client: Services):
-#     sandbox_accounts = client.users.get_accounts()
-#     for sandbox_account in sandbox_accounts.accounts:
-#         client.sandbox.close_sandbox_account(account_id=sandbox_account.id)
-
-#     # open new sandbox account
-#     sandbox_account = client.sandbox.open_sandbox_account()
-#     account_id = sandbox_account.account_id
-#     add_money_sandbox(client=client, account_id=account_id, money=5000)
 
 
 def loop():
     while True:
-        input()
+        time.sleep(1)
 
 def main():
     LOGGER.info(message="LAUNCH <start_app> FOR AUTO START BOT", module=__name__)
@@ -98,9 +84,7 @@ def main():
         if client_type == SandboxClient:
             SANDBOX_MANAGER = SandboxManager(client)
             SANDBOX_MANAGER.open_new_sandbox(delete_after_use=configs["once_test_sandbox"] == "1")
-            # SANDBOX_MANAGER.add_money_sandbox()  # делается уже в open_new_sandbox
             account_id = SANDBOX_MANAGER.account_id
-            # create_sandbox_account(client)
         else:
             account_id = client.users.get_accounts().accounts[0].id  # расчет на то что токен для одного счета
         control_hub = ControlHub(client, account_id)
@@ -123,12 +107,14 @@ def main():
         print("Начало работы")
 
         # начало работы тг-бота
+        # ПЕРЕПРАВИТЬ ВООБЩЕ ВЕСЬ ЭТОТ БЛОК ЗАПУСКА
+        # ВЫГЛЯДИТ КАК ШЛЯПА
         set_control_hub(control_hub)
-        start_bot()
-        
-
+        thr = threading.Thread(target=start_bot, daemon=True)
 
         try:
+            # start_bot()
+            thr.run()
             loop()
         except KeyboardInterrupt:
             print("Принудительное завершение программы...")
@@ -139,6 +125,7 @@ def main():
         if (not SANDBOX_MANAGER is None) and (SANDBOX_MANAGER.on_delete):
             SANDBOX_MANAGER.close_current_sandbox()
 
+        stop_bot()
         control_hub.stop_strategies()
         return
 

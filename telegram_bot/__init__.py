@@ -1,1 +1,1 @@
-from .telegram_bot import start_bot, set_control_hub
+from .telegram_bot import start_bot, set_control_hub, stop_bot

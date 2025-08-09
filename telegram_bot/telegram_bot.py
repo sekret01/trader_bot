@@ -1,7 +1,5 @@
 """
 Телеграм бот для управления работой тредер-бота.
-
-version: 0.1
 """
 
 import telebot
@@ -164,6 +162,10 @@ def start_bot():
     print("start telegram bot")
     bot.polling(non_stop=True)
 
+def stop_bot():
+    print("stop telegram bot")
+    bot.stop_polling()
+    
 
 if __name__ == "__main__":
     start_bot()
