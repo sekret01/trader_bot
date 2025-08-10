@@ -2,13 +2,17 @@ from __future__ import annotations
 import logging
 import datetime
 
-logging.basicConfig(filename="app/logs/main_logs.log", format="<%(asctime)s> %(levelname)s: %(message)s", level=logging.INFO)
+logging.basicConfig(filename="app/logs/main_logs.log", format="<%(asctime)s> %(name)s %(levelname)s: %(message)s", level=logging.INFO)
+
+# отключение логгера от tinkoff.invest
+tinkoff_logger = logging.getLogger("tinkoff.invest.logging")
+tinkoff_logger.setLevel(logging.ERROR)
 
 
 class Logger:
     """ Логирование в файл, возможен вывод в консоль при stream_out=True """
     _instance: Logger | None = None
-    logger: logging.Logger = logging.getLogger("main logger")
+    logger: logging.Logger = logging.getLogger("MAIN")
     stream_out: bool = False
 
     def __new__(cls, *args, **kwargs):
