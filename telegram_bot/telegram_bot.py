@@ -3,25 +3,29 @@
 """
 
 import telebot
-from telebot import types
 import configparser
-from app import ControlHub
-from pathlib import Path
 import datetime
+from telebot import types
+from pathlib import Path
+
+from app import ControlHub
 from app import TinkoffDataGetter
+from app import Logger
 # from app import TinkoffDataGetter
 
 CONTROL_HUB: ControlHub | None = None
 BUFF_DIR = Path("app/buff")
 BUFF_OPERATION = "operations"
 DATA_GETTER: TinkoffDataGetter = None
+LOGGER = Logger()
 
 
 def set_control_hub(hub: ControlHub) -> None:
     """ Установка модуля ControlHub """
-    global CONTROL_HUB, DATA_GETTER
+    global CONTROL_HUB, DATA_GETTER, LOGGER
     CONTROL_HUB = hub
     DATA_GETTER = TinkoffDataGetter(CONTROL_HUB.client, CONTROL_HUB.account_id)
+    LOGGER.info(message=f"TG-BOT SETUP >> hub has been loaded", module=__name__)
 
 def get_token() -> str:
     """ Получение токена """
@@ -160,10 +164,12 @@ def other_messages(message):
 
 def start_bot():
     print("start telegram bot")
+    LOGGER.info(message=f"TG-BOT >> start polling bot", module=__name__)
     bot.polling(non_stop=True)
 
 def stop_bot():
     print("stop telegram bot")
+    LOGGER.info(message=f"TG-BOT >> stop polling bot", module=__name__)
     bot.stop_polling()
     
 

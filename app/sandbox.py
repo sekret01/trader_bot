@@ -43,11 +43,14 @@ class SandboxManager:
         """
         # open new sandbox account
         self.on_delete = delete_after_use
-        sandbox_account = self.client.sandbox.open_sandbox_account()
-        self.account_id = sandbox_account.account_id
-        self.logger.info(message=f"SANDBOX_ACC_SETUP [{self.account_id}] >> new account has been created, ON_DELETE={self.on_delete}",
-                         module=__name__)
-        self.add_money_sandbox()
+        try:
+            sandbox_account = self.client.sandbox.open_sandbox_account()
+            self.account_id = sandbox_account.account_id
+            self.logger.info(message=f"SANDBOX_ACC_SETUP [{self.account_id}] >> new account has been created, ON_DELETE={self.on_delete}",
+                            module=__name__)
+            self.add_money_sandbox()
+        except Exception as ex:
+            self.logger.error(message=f"SANDBOX_ACC_SETUP >> can not create new sandbox :: {ex}", module=__name__)
     
     def close_current_sandbox(self):
         if self.account_id is None: return
