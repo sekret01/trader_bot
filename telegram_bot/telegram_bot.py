@@ -100,11 +100,18 @@ def get_balance_report() -> ...:
 
 def load_csv_reports() -> ...:
     """ Загрузка csv-данных, хранящихся на сервере (файлы balance_data.csv и market_data.csv) """
-    pass
+    bot.send_message(CLIENT_ID, f"CSV-ОТЧЕТЫ")
+    with open("reports/balance_statistic.csv", encoding='utf-8') as file:
+        bot.send_document(CLIENT_ID, file)
+    with open("reports/market_data.csv", encoding='utf-8') as file:
+        bot.send_document(CLIENT_ID, file)
+    
 
 def load_logs() -> ...:
     """ Загрузка log-файла, хранящегося на сервере """
-    pass
+    bot.send_message(CLIENT_ID, f"ЗАГРУЗКА LOG-ФАЙДА")
+    with open("app/logs/main_logs.log", encoding='utf-8') as file:
+        bot.send_document(CLIENT_ID, file)
 
 
 
@@ -140,13 +147,13 @@ def other_messages(message):
         get_market_report()
         
     elif message.text == "получить csv-отчеты":
-        bot.reply_to(message, "получить csv-отчеты (недоступно)")
+        bot.reply_to(message, "получить csv-отчеты")
         load_csv_reports()
-        ...
+
     elif message.text == "получить log-файл":
-        bot.reply_to(message, "получить log-файл (недоступно)")
+        bot.reply_to(message, "получить log-файл")
         load_logs()
-        ...
+
 
     elif message.text == "...":
         bot.reply_to(message, "функционал будет доступен в следующих обновлениях")   
