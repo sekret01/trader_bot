@@ -13,6 +13,7 @@ from .control_hub import ControlHub
 from .csv_saver import CSV_Saver
 from .sandbox import SandboxManager
 from .broker_actions import TinkoffDataGetter
+from .error_handler import ErrorHandler
 
 if PLATFORM == "Windows":
     from .console import Console

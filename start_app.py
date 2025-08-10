@@ -24,10 +24,12 @@ from tinkoff.invest.utils import decimal_to_quotation
 from app import ControlHub
 from app import Logger
 from app import SandboxManager
+from app import ErrorHandler
 
 from telegram_bot import start_bot
 from telegram_bot import set_control_hub
 from telegram_bot import stop_bot
+from telegram_bot import print_error
 
 
 _start_config_path = "configs/start_app.ini"
@@ -35,6 +37,7 @@ _token_konfig_path = "configs/.configs.ini"
 PARSER = configparser.ConfigParser()
 LOGGER = Logger()
 SANDBOX_MANAGER: SandboxManager = None
+ERROR_HANDLER = ErrorHandler()
 
 
 def get_configs() -> dict:
@@ -104,6 +107,7 @@ def main():
 
         LOGGER.info(message="start strategy", module=__name__)
         control_hub.run_strategies()
+        ErrorHandler().add_handler(func=print_error)
         print("Начало работы")
 
         # начало работы тг-бота

@@ -167,6 +167,10 @@ def start_bot():
     LOGGER.info(message=f"TG-BOT >> start polling bot", module=__name__)
     bot.polling(non_stop=True)
 
+def print_error(msg: str) -> None:
+    bot.send_message(CLIENT_ID, "СБОЙ В СИСТЕМЕ")
+    bot.send_message(CLIENT_ID, msg)
+
 def stop_bot():
     print("stop telegram bot")
     LOGGER.info(message=f"TG-BOT >> stop polling bot", module=__name__)

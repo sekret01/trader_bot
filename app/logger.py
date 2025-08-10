@@ -1,6 +1,7 @@
 from __future__ import annotations
 import logging
 import datetime
+from .error_handler import ErrorHandler
 
 logging.basicConfig(filename="app/logs/main_logs.log", format="<%(asctime)s> %(name)s %(levelname)s: %(message)s", level=logging.INFO)
 
@@ -31,6 +32,7 @@ class Logger:
 
     def error(self, message: str, module: str):
         self.logger.error(module + " > " + message if module else message)
+        ErrorHandler().error(msg=module + " > " + message)
         if self.stream_out:
             print(f"[{datetime.datetime.now().date()}  {self.get_time(datetime.datetime.now())}] !!-ERROR-!! [{module}]: {message}")
 
