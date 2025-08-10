@@ -11,6 +11,7 @@ from pathlib import Path
 from app import ControlHub
 from app import TinkoffDataGetter
 from app import Logger
+from app import CSV_Saver
 # from app import TinkoffDataGetter
 
 CONTROL_HUB: ControlHub | None = None
@@ -101,17 +102,32 @@ def get_balance_report() -> ...:
 def load_csv_reports() -> ...:
     """ Загрузка csv-данных, хранящихся на сервере (файлы balance_data.csv и market_data.csv) """
     bot.send_message(CLIENT_ID, f"CSV-ОТЧЕТЫ")
-    with open("reports/balance_statistic.csv", encoding='utf-8') as file:
-        bot.send_document(CLIENT_ID, file)
-    with open("reports/market_data.csv", encoding='utf-8') as file:
-        bot.send_document(CLIENT_ID, file)
+    try:
+        with open("reports/balance_statistic.csv", encoding='utf-8') as file:
+            bot.send_document(CLIENT_ID, file)
+        with open("reports/market_data.csv", encoding='utf-8') as file:
+            bot.send_document(CLIENT_ID, file)
+    except Exception as ex:
+        LOGGER.error(f"TG-BOT LOAD_CSV_REPORT ERROR :: {ex}", module=__name__)
     
 
 def load_logs() -> ...:
     """ Загрузка log-файла, хранящегося на сервере """
     bot.send_message(CLIENT_ID, f"ЗАГРУЗКА LOG-ФАЙДА")
-    with open("app/logs/main_logs.log", encoding='utf-8') as file:
-        bot.send_document(CLIENT_ID, file)
+    try:
+        with open("app/logs/main_logs.log", encoding='utf-8') as file:
+            bot.send_document(CLIENT_ID, file)
+    except Exception as ex:
+        LOGGER.error(f"TG-BOT LOAD_LOGS ERROR :: {ex}", module=__name__)
+        bot.send_message(CLIENT_ID, "Log-файл пуст")
+
+def clear_save_files() -> None:
+    """ Очистка log и csv данных """
+    csv_redactor = CSV_Saver(CONTROL_HUB.client, CONTROL_HUB.account_id)
+    csv_redactor._create_files()
+    log_path = Path("app/logs/main_logs.log")
+    log_path.write_text("")
+    bot.send_message(CLIENT_ID, "Были очищены данные из csv- и log-файлов")
 
 
 
@@ -135,8 +151,8 @@ def other_messages(message):
         bot.reply_to(message, "Сервис запущен", reply_markdown=main_menu)
     
     elif message.text == "очистка логов":
-        bot.reply_to(message, "Очистка логов (недоступно)")
-        ...
+        bot.reply_to(message, "Очистка логов")
+        clear_save_files()
 
     elif message.text == "отчет о балансе":
         bot.reply_to(message, "отчет о балансе")

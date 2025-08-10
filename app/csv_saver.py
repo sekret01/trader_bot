@@ -31,7 +31,12 @@ class CSV_Saver:
             with open(self.balance_statistic_path, 'w', encoding='utf-8') as file:
                 file.write(self.header_balance + '\n')
 
-        # возможно добавить логику на проверку корректности данных
+    def _create_files(self):
+        """ Функция создания файлов сохранения """
+        with open(self.balance_statistic_path, 'w', encoding='utf-8') as file:
+            file.write(self.header_balance + '\n')
+        with open(self.market_data_path, 'w', encoding='utf-8') as file:
+            file.write(self.header_market + '\n')
 
     def write_market_data(
             self,
