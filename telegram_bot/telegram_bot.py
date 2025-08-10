@@ -66,9 +66,11 @@ def start_service() -> None:
 
 def get_market_report() -> ...:
     """ Создание отчета об операциях бота за день """
-    
     buff_data = []
     buf_path: Path = BUFF_DIR / BUFF_OPERATION
+    if not buf_path.exists():
+        buf_path.touch()
+
     with buf_path.open(mode="r", encoding='utf-8') as file:
         i = 0
         while True:
@@ -80,6 +82,8 @@ def get_market_report() -> ...:
             if i >= 500:
                 break
     report = "".join(buff_data)
+    if len(report) == 0:
+        report = "no data yet"
     bot.send_message(CLIENT_ID, f"ОТЧЕТ О РАБОТЕ ЗА {datetime.datetime.now().date()}")
     bot.send_message(CLIENT_ID, report)
 

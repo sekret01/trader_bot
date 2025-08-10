@@ -21,3 +21,7 @@ app/logs/main_logs.log
 
 # excel
 *.xlsx
+
+# buffer
+app/buff/*
+!app/buff/buff
