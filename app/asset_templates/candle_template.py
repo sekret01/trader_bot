@@ -71,7 +71,8 @@ class CandleTemplate(AssetTemplate):
         self.saver: CSV_Saver | None = None
         self.operation_controller = TinkoffMarketOperations(self.client, account_id=account_id)
 
-        self._stop: bool = False
+        self.stop_monitoring: bool = False
+        self.is_paused: bool = False
 
     def __repr__(self) -> str:
         return f"{self.name}:[figi={self.figi}]"
@@ -87,18 +88,42 @@ class CandleTemplate(AssetTemplate):
         # if self.account_id is None:
         #     self.account_id = self.client.users.get_accounts().accounts[0].id
         self.saver = CSV_Saver(self.client, self.account_id)
-        self._stop = False
+        self.stop_monitoring = False
         self.main_loop()
 
     def stop(self) -> None:
         """ Остановка мониторинга """
-        self._stop = True
+        self.stop_monitoring = True
         self.logger.info(message=f"{self.__repr__()} >> stop asset monitoring", module=__name__)
+    
+    def pause(self) -> None:
+        """ Временное прекращение мониторинга """
+        self.is_paused = True
+        self.logger.info(message=f"{self.__repr__()} >> pause monitoring", module=__name__)
+        # while self.is_paused:
+        #     time.sleep(1)
+    
+    def resume(self) -> None:
+        """ Продолжение мониторинга после остановки """
+        self.is_paused = False
+        self.logger.info(message=f"{self.__repr__()} >> resume monitoring", module=__name__)
+
+    def _wait(self, sec: int) -> None:
+        """ Ожидание времени с постоянной проверкой на выключение """
+        for i in range(sec):
+            time.sleep(1)
+            if self.stop_monitoring:  # завершаем процесс вообще
+                self.stop()
+                break
+            if self.is_paused:  # типо поставили на ожидание
+                while self.is_paused:
+                    time.sleep(1)
+                break  # выход из цикла ожидания после паузы
 
     def main_loop(self) -> None:
         """ Главный цикл мониторинга актива """
         while True:
-            if self._stop: break
+            if self.stop_monitoring: break
 
             try:
                 self.wait_for_open_market()
@@ -112,7 +137,7 @@ class CandleTemplate(AssetTemplate):
             except AioRequestError as ex:
                 self.logger.error(message=f"{self.__repr__()} stop processing candle data: {ex}", module=__name__)
 
-            time.sleep(self.check_interval)
+            self._wait(self.check_interval)
 
 
     def action(self, signal: int) -> None:
@@ -201,13 +226,16 @@ class CandleTemplate(AssetTemplate):
                 if not self.is_waiting_open:
                     self.is_waiting_open = True
                     self.logger.info(message=f"{self.name}:[{self.figi}] market close", module=__name__)
-                time.sleep(self.wait_time)
+                self._wait(self.wait_time)
 
             else:
                 if self.is_waiting_open:
                     self.is_waiting_open = False
                     self.logger.info(message=f"{self.name}:[{self.figi}] market open", module=__name__)
                 return
+
+            self._wait(1)
+            
 
 
     def to_json(self) -> dict:
@@ -226,7 +254,7 @@ class CandleTemplate(AssetTemplate):
             "is_bought": self.is_bought,
             "is_waiting_open": self.is_waiting_open,
             "wait_time": self.wait_time,
-            "_stop": self._stop
+            "stop_monitoring": self.stop_monitoring
         }
 
     @staticmethod
@@ -248,7 +276,7 @@ class CandleTemplate(AssetTemplate):
         asset.is_bought = data["is_bought"]
         asset.is_waiting_open = data["is_waiting_open"]
         asset.wait_time = data["wait_time"]
-        asset._stop = data["_stop"]
+        asset.stop_monitoring = data["stop_monitoring"]
         asset.logger = Logger()
         asset.saver = CSV_Saver(client)
 

@@ -31,6 +31,8 @@ class ControlHub:
         self.client: Services | SandboxService | None = client
         self.account_id: str = account_id
         self.strategies_block: dict[str,list[AssetTemplate]] = {}
+        # self.strategies_threads: dict[str, threading.Thread]
+        self.worked_assets: list[AssetTemplate] = []  # список объектов, которые были запущены хотя бы раз
         self.logger: Logger = Logger()
         self.assert_constructor: AssetsConstructor = AssetsConstructor(client, account_id)
 
@@ -41,10 +43,10 @@ class ControlHub:
     def run_strategies(self) -> None:
         """ Запуск всех необходимых стратегий """
         if not self.ready_for_work:
-            self.logger.warning(message="try to start bot without configurate, stop working", module=__name__)
+            self.logger.error(message="try to start bot without configurate, stop working", module=__name__)
             return
         if self.client is None:
-            self.logger.warning(message="client was not connect, stop working", module=__name__)
+            self.logger.error(message="client was not connect, stop working", module=__name__)
             return
 
         for strategy_name, strategy_list in self.strategies_block.items():
@@ -52,13 +54,22 @@ class ControlHub:
                              module=__name__)
             try:
                 for asset in strategy_list:
-                    asset.daemon = True  # для завершения работы со всеми потоками
-                    asset.start()
-                    # добавить сбор потоков для отслеживания статуса работы каждого
+                    is_alive_asset = str(asset.is_alive())
+
+                    if asset in self.worked_assets:
+                        # возобновление работы 
+                        ...
+                    else:
+                        asset.daemon = True
+                        asset.start()
+                        self.worked_assets.append(asset)
+
+                    # --добавить сбор потоков для отслеживания статуса работы каждого
+                    # данные собираются в self.worked_assets
 
                     self.logger.info(message=f"{asset.__repr__()} >> START TO WORK", module=__name__)
             except Exception as ex:
-                self.logger.error(message=f"error with starting strategy: {ex}", module=__name__)
+                self.logger.error(message=f"error with starting strategy [{strategy_name}]: {ex}", module=__name__)
         self.set_working_status(1)
 
     def stop_strategies(self):
@@ -69,12 +80,34 @@ class ControlHub:
             self.logger.info(message=f"{strategy} >> STOP STRATEGY", module=__name__)
         self.set_working_status(0)
 
+    def pause_strategise(self):
+        """ Временное приостановление работы стратегий """
+        for strategy, assets in self.strategies_block.items():
+            for asset_thread in assets:
+                asset_thread.pause()
+            self.logger.info(message=f"{strategy} >> PAUSE STRATEGY", module=__name__)
+        self.set_paused_status(1)
+    
+    def resume_strategise(self):
+        """ Возобновление работы стратегий после паузы """
+        for strategy, assets in self.strategies_block.items():
+            for asset_thread in assets:
+                asset_thread.resume()
+            self.logger.info(message=f"{strategy} >> RESUME STRATEGY", module=__name__)
+
+        self.set_paused_status(0)
+
     def set_strategies(self) -> None:
         """
         Конструктор стратегий. Собирает strategies_block
         по конфигурационному листу, либо по последним
         сохраненным данным.
         """
+        if len(self.strategies_block) > 0:
+            self.logger.error(message=f"existing data on assets to be destroyed has been found!!!",
+                              module=__name__)
+            self.strategies_block = {}
+
         try:
             with open("configs/asset_config.json", "r", encoding="utf-8") as file:
                 asset_data: list[dict] = json.load(file)
@@ -118,9 +151,25 @@ class ControlHub:
         with open("configs/start_app.ini", 'w') as file:
             prs.write(file)
     
+    def set_paused_status(self, status: Literal[0, 1]) -> None:
+            """ Установка статуса паузы в файле конфигураций start_app.ini """
+            prs = configparser.ConfigParser()
+            prs.read("configs/start_app.ini")
+            prs["WORK"]["paused"] = str(status)
+            with open("configs/start_app.ini", 'w') as file:
+                prs.write(file)
+
     @property
     def get_work_status(self) -> Literal['0', '1']:
         """ Получить статус работы сервиса """
         prs = configparser.ConfigParser()
         prs.read("configs/start_app.ini")
         return prs["WORK"]["working_status"]
+
+    @property
+    def get_paused_status(self) -> Literal['0', '1']:
+        """ Получить статус паузы сервиса """
+        prs = configparser.ConfigParser()
+        prs.read("configs/start_app.ini")
+        return prs["WORK"]["paused"]
+    

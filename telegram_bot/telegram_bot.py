@@ -49,7 +49,7 @@ bot = telebot.TeleBot(token)
 CLIENT_ID: str = ""
 
 main_menu = types.ReplyKeyboardMarkup(row_width=2)
-main_menu_btn_1 = types.KeyboardButton("включить")  # text="Статус", callback_data="status")
+main_menu_btn_1 = types.KeyboardButton("приостановить")  # text="Статус", callback_data="status")
 main_menu_btn_2 = types.KeyboardButton("очистка логов")
 main_menu_btn_3 = types.KeyboardButton("отчет о балансе")
 main_menu_btn_4 = types.KeyboardButton("отчет об операциях")
@@ -68,26 +68,39 @@ def get_work_status() -> str:
     except Exception as ex:
         LOGGER.error(f"ERROR IN GET WORK STATUS :: {ex}", f"{__name__}.get_work_status")
 
+def get_paused_status() -> str:
+    """ Получение статуса работы сервиса, авто настройка кнопки на панели """
+    try:
+        pr = configparser.ConfigParser()
+        pr.read("configs/start_app.ini")
+        return pr["WORK"]["paused"]
+    except Exception as ex:
+        LOGGER.error(f"ERROR IN GET PAUSED STATUS :: {ex}", f"{__name__}.get_paused_status")
+
 @check_client_id
-def stop_service() -> None:
-    """ Остановка работы сервиса трейдинга """
-    if CONTROL_HUB.get_work_status == '0':
-        bot.send_message(CLIENT_ID, "Сервис не включен")
+def pause_service() -> None:
+    """ Пристановка работы сервиса трейдинга """
+    # if CONTROL_HUB.get_work_status == '0':
+    if CONTROL_HUB.get_paused_status == '1':
+        bot.send_message(CLIENT_ID, "Сервис уже приостановлен")
     else:
-        CONTROL_HUB.stop_strategies()
-        main_menu.keyboard[0][0]["text"] = "включить"
-        bot.send_message(CLIENT_ID, "Сервис остановлен", reply_markup=main_menu)
+        # CONTROL_HUB.stop_strategies()
+        CONTROL_HUB.pause_strategise()
+        main_menu.keyboard[0][0]["text"] = "возобновить"
+        bot.send_message(CLIENT_ID, "Сервис приостановлен", reply_markup=main_menu)
         LOGGER.info(message="TG-BOT >> STOP SERVICE", module=f"{__name__}.stop_service")
 
 @check_client_id
-def start_service() -> None:
-    """ Запуск сервиса трейдинга """
-    if CONTROL_HUB.get_work_status == '1':
+def resume_service() -> None:
+    """ Возобновление работы сервиса трейдинга """
+    # if CONTROL_HUB.get_work_status == '1':
+    if CONTROL_HUB.get_paused_status == '0':
         bot.send_message(CLIENT_ID, "Сервис уже работает")
     else:
-        CONTROL_HUB.run_strategies()
-        main_menu.keyboard[0][0]["text"] = "выключить"
-        bot.send_message(CLIENT_ID, "Сервис запущен", reply_markup=main_menu)
+        # CONTROL_HUB.run_strategies()
+        CONTROL_HUB.resume_strategise()
+        main_menu.keyboard[0][0]["text"] = "приостановить"
+        bot.send_message(CLIENT_ID, "Сервис возобновлен", reply_markup=main_menu)
 
 @check_client_id
 def get_market_report() -> ...:
@@ -171,16 +184,16 @@ def start(message):
 @bot.message_handler(func=lambda message: True)
 def other_messages(message):
 
-    if message.text == "выключить":
+    if message.text == "приостановить":
         try:
-            stop_service()
+            pause_service()
         except Exception as ex:
             LOGGER.error(f"TG-BOT >> ERROR IN STOP SERVISE :: {ex}", f"{__name__}.stop_service")
         # bot.reply_to(message, "Сервис остановлен", reply_markdown=main_menu)
         
-    elif message.text == "включить":
+    elif message.text == "возобновить":
         try:
-            start_service()
+            resume_service()
         except Exception as ex:
             LOGGER.error(f"TG-BOT >> ERROR IN START SERVISE :: {ex}", f"{__name__}.start_service")
         # bot.reply_to(message, "Сервис запущен", reply_markdown=main_menu)
@@ -228,7 +241,7 @@ def start_bot():
     print("start telegram bot")
     LOGGER.info(message=f"TG-BOT >> start polling bot", module=__name__)
     if get_work_status() == '1':
-        main_menu.keyboard[0][0]["text"] = "выключить"
+        main_menu.keyboard[0][0]["text"] = "приостановить"
     bot.polling(non_stop=True)
 
 def print_error(msg: str) -> None:
