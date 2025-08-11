@@ -31,7 +31,7 @@
   },
   {
     "name": "TGLD",
-    "figi": "TCS10A101X50",
+    "figi": "TCS80A101X50",
     "amount": 100,
     "days_back": 30,
     "timeframe": 4,

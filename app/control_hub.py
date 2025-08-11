@@ -1,6 +1,7 @@
 from typing import Literal, Optional
 import threading
 import json
+import configparser
 
 from tinkoff.invest import Client, AioRequestError, InstrumentType, CandleInterval
 from tinkoff.invest.sandbox.client import SandboxClient
@@ -58,6 +59,7 @@ class ControlHub:
                     self.logger.info(message=f"{asset.__repr__()} >> START TO WORK", module=__name__)
             except Exception as ex:
                 self.logger.error(message=f"error with starting strategy: {ex}", module=__name__)
+        self.set_working_status(1)
 
     def stop_strategies(self):
         """ Остановка работы всех стратегий """
@@ -65,6 +67,7 @@ class ControlHub:
             for thread in assets:
                 thread.stop()
             self.logger.info(message=f"{strategy} >> STOP STRATEGY", module=__name__)
+        self.set_working_status(0)
 
     def set_strategies(self) -> None:
         """
@@ -106,3 +109,18 @@ class ControlHub:
                 self.ready_for_work = False
                 self.logger.warning(message=f"there is not a single asset to monitor",
                                  module=__name__)
+    
+    def set_working_status(self, status: Literal[0, 1]) -> None:
+        """ Установка статуса работы в файле конфигураций start_app.ini """
+        prs = configparser.ConfigParser()
+        prs.read("configs/start_app.ini")
+        prs["WORK"]["working_status"] = str(status)
+        with open("configs/start_app.ini", 'w') as file:
+            prs.write(file)
+    
+    @property
+    def get_work_status(self) -> Literal['0', '1']:
+        """ Получить статус работы сервиса """
+        prs = configparser.ConfigParser()
+        prs.read("configs/start_app.ini")
+        return prs["WORK"]["working_status"]

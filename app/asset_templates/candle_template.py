@@ -93,6 +93,7 @@ class CandleTemplate(AssetTemplate):
     def stop(self) -> None:
         """ Остановка мониторинга """
         self._stop = True
+        self.logger.info(message=f"{self.__repr__()} >> stop asset monitoring", module=__name__)
 
     def main_loop(self) -> None:
         """ Главный цикл мониторинга актива """
@@ -156,9 +157,10 @@ class CandleTemplate(AssetTemplate):
         )
         self.status_saver.put_message(message=self.to_json())
         _time = datetime.datetime.now().time()
-        self.buffer_steck.put_message(
-            file_n="operations",
-            message=f"<{_time.hour}:{_time.minute}:{_time.second}> [{self.name}] >> {operation} | {round(price, 2)}")
+        if operation != "SKIP":
+            self.buffer_steck.put_message(
+                file_n="operations",
+                message=f"<{_time.hour}:{_time.minute}:{_time.second}> [{self.name}] >> {operation} | {round(price, 2)}")
 
     # def put_operation_in_buff(self, operation_type: Literal["BUY", "SELL"], price: float) -> None:
     #     _time = datetime.datetime.now().time()
@@ -184,7 +186,13 @@ class CandleTemplate(AssetTemplate):
     def wait_for_open_market(self):
         """ Ожидание открытия торгов, если они недоступны """
         while True:
-            trading_data = self.client.market_data.get_trading_status(figi=self.figi)
+            try:
+                trading_data = self.client.market_data.get_trading_status(figi=self.figi)
+            except Exception as ex:
+                self.logger.error(message=f" {self.__repr__()} ERROR in getting status :: {ex}",
+                                  module=__name__)
+                self.stop()
+                raise Exception(f"{self.__repr__()} ERROR WITH GETTING STATUS :: {ex}")
 
             if not (
                 trading_data.api_trade_available_flag and

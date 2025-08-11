@@ -20,6 +20,15 @@ BUFF_OPERATION = "operations"
 DATA_GETTER: TinkoffDataGetter = None
 LOGGER = Logger()
 
+def check_client_id(func: callable):
+    global CLIENT_ID
+    def wrapper(*args, **kwargs):
+        if CLIENT_ID == "":
+            return None
+        res = func(*args, **kwargs)
+        return res
+    return wrapper
+
 
 def set_control_hub(hub: ControlHub) -> None:
     """ Установка модуля ControlHub """
@@ -37,7 +46,7 @@ def get_token() -> str:
 
 token = get_token()
 bot = telebot.TeleBot(token)
-CLIENT_ID: int | str = ""
+CLIENT_ID: str = ""
 
 main_menu = types.ReplyKeyboardMarkup(row_width=2)
 main_menu_btn_1 = types.KeyboardButton("включить")  # text="Статус", callback_data="status")
@@ -49,22 +58,38 @@ main_menu_btn_6 = types.KeyboardButton("получить log-файл")
 main_menu.add(main_menu_btn_1, main_menu_btn_2, main_menu_btn_3, main_menu_btn_4, main_menu_btn_5, main_menu_btn_6)
 
 
-def get_work_status() -> int:
-    """ Получение статуса работы сервиса, авто настройка кнопки на панели """
-    pr = configparser.ConfigParser()
-    pr.read("configs.start_app.ini")
-    return int(pr["WORK"]["working_status"])
 
+def get_work_status() -> str:
+    """ Получение статуса работы сервиса, авто настройка кнопки на панели """
+    try:
+        pr = configparser.ConfigParser()
+        pr.read("configs/start_app.ini")
+        return pr["WORK"]["working_status"]
+    except Exception as ex:
+        LOGGER.error(f"ERROR IN GET WORK STATUS :: {ex}", f"{__name__}.get_work_status")
+
+@check_client_id
 def stop_service() -> None:
     """ Остановка работы сервиса трейдинга """
-    CONTROL_HUB.stop_strategies()
-    main_menu.keyboard[0][0].text = "включить"
+    if CONTROL_HUB.get_work_status == '0':
+        bot.send_message(CLIENT_ID, "Сервис не включен")
+    else:
+        CONTROL_HUB.stop_strategies()
+        main_menu.keyboard[0][0]["text"] = "включить"
+        bot.send_message(CLIENT_ID, "Сервис остановлен", reply_markup=main_menu)
+        LOGGER.info(message="TG-BOT >> STOP SERVICE", module=f"{__name__}.stop_service")
 
+@check_client_id
 def start_service() -> None:
     """ Запуск сервиса трейдинга """
-    CONTROL_HUB.run_strategies()
-    main_menu.keyboard[0][0].text = "выключить"
+    if CONTROL_HUB.get_work_status == '1':
+        bot.send_message(CLIENT_ID, "Сервис уже работает")
+    else:
+        CONTROL_HUB.run_strategies()
+        main_menu.keyboard[0][0]["text"] = "выключить"
+        bot.send_message(CLIENT_ID, "Сервис запущен", reply_markup=main_menu)
 
+@check_client_id
 def get_market_report() -> ...:
     """ Создание отчета об операциях бота за день """
     buff_data = []
@@ -88,6 +113,7 @@ def get_market_report() -> ...:
     bot.send_message(CLIENT_ID, f"ОТЧЕТ О РАБОТЕ ЗА {datetime.datetime.now().date()}")
     bot.send_message(CLIENT_ID, report)
 
+@check_client_id
 def get_balance_report() -> ...:
     """ Создание отчета о балансе счета и распределении активов на данный момент """
     bot.send_message(CLIENT_ID, f"ОТЧЕТ О СОСТОЯНИИ БАЛАНСА\n[{str(datetime.datetime.now())}]")
@@ -99,6 +125,7 @@ def get_balance_report() -> ...:
             rep_str = f"{instr["ticker"]} [{instr["figi"]}]\namount: {instr["amount"]}\n{instr["cur_price_for_one"]} руб >> {instr["cur_price"]} руб"
             bot.send_message(CLIENT_ID, rep_str)
 
+@check_client_id
 def load_csv_reports() -> ...:
     """ Загрузка csv-данных, хранящихся на сервере (файлы balance_data.csv и market_data.csv) """
     bot.send_message(CLIENT_ID, f"CSV-ОТЧЕТЫ")
@@ -111,6 +138,7 @@ def load_csv_reports() -> ...:
         LOGGER.error(f"TG-BOT LOAD_CSV_REPORT ERROR :: {ex}", module=__name__)
     
 
+@check_client_id
 def load_logs() -> ...:
     """ Загрузка log-файла, хранящегося на сервере """
     bot.send_message(CLIENT_ID, f"ЗАГРУЗКА LOG-ФАЙДА")
@@ -121,6 +149,7 @@ def load_logs() -> ...:
         LOGGER.error(f"TG-BOT LOAD_LOGS ERROR :: {ex}", module=__name__)
         bot.send_message(CLIENT_ID, "Log-файл пуст")
 
+@check_client_id
 def clear_save_files() -> None:
     """ Очистка log и csv данных """
     csv_redactor = CSV_Saver(CONTROL_HUB.client, CONTROL_HUB.account_id)
@@ -143,12 +172,18 @@ def start(message):
 def other_messages(message):
 
     if message.text == "выключить":
-        stop_service()
-        bot.reply_to(message, "Сервис остановлен", reply_markdown=main_menu)
+        try:
+            stop_service()
+        except Exception as ex:
+            LOGGER.error(f"TG-BOT >> ERROR IN STOP SERVISE :: {ex}", f"{__name__}.stop_service")
+        # bot.reply_to(message, "Сервис остановлен", reply_markdown=main_menu)
         
     elif message.text == "включить":
-        start_service()
-        bot.reply_to(message, "Сервис запущен", reply_markdown=main_menu)
+        try:
+            start_service()
+        except Exception as ex:
+            LOGGER.error(f"TG-BOT >> ERROR IN START SERVISE :: {ex}", f"{__name__}.start_service")
+        # bot.reply_to(message, "Сервис запущен", reply_markdown=main_menu)
     
     elif message.text == "очистка логов":
         bot.reply_to(message, "Очистка логов")
@@ -192,6 +227,8 @@ def other_messages(message):
 def start_bot():
     print("start telegram bot")
     LOGGER.info(message=f"TG-BOT >> start polling bot", module=__name__)
+    if get_work_status() == '1':
+        main_menu.keyboard[0][0]["text"] = "выключить"
     bot.polling(non_stop=True)
 
 def print_error(msg: str) -> None:
