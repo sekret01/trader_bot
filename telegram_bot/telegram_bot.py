@@ -138,7 +138,7 @@ def get_balance_report() -> ...:
         # bot.send_message(CLIENT_ID, f"инструмент {instrument_type.upper()}")
         instr_report = f"инструмент {instrument_type.upper()}\n\n"
         for instr in instruments:
-            rep_str = f"> {instr["ticker"]} [{instr["figi"]}]\n    amount: {instr["amount"]}\n    {instr["cur_price_for_one"]} руб >> {instr["cur_price"]} руб"
+            rep_str = f"> {instr["ticker"]} [{instr["figi"]}]\n    amount: {instr["amount"]}\n    {instr["cur_price_for_one"]} руб >> {instr["cur_price"]} руб\n"
             # bot.send_message(CLIENT_ID, rep_str)
             instr_report += rep_str
         bot.send_message(CLIENT_ID, instr_report)

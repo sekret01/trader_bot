@@ -4,6 +4,7 @@ from typing import Generator
 from tinkoff.invest import CandleInterval, HistoricCandle
 from tinkoff.invest.services import Services
 from tinkoff.invest.utils import now, money_to_decimal, quotation_to_decimal
+from ..logger import Logger
 
 
 class TinkoffDataGetter:
@@ -12,6 +13,7 @@ class TinkoffDataGetter:
     def __init__(self, client: Services, account_id: str) -> None:
         self.client = client
         self.account_id: str = account_id
+        self.logger = Logger()
 
     def get_candles(
             self,
@@ -34,6 +36,16 @@ class TinkoffDataGetter:
             from_=from_,
             to=to
         )
+
+    def get_figi(self, seek_ticker: str) -> str | None:
+        tickers = []
+        for instr in self.client.instruments.find_instrument(query=seek_ticker).instruments:
+            if instr.ticker == seek_ticker:
+                return instr.figi
+            tickers.append(instr.ticker)
+        self.logger.error(message=f"{seek_ticker} was not find. May be you need [{', '.join(tickers)}]",
+                          module=__name__)
+        return None
     
 
     def get_balance(self) -> dict:

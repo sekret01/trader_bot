@@ -11,11 +11,12 @@ from ._asset_template import AssetTemplate
 from ..csv_saver import CSV_Saver
 from ..status_saver import MessageSteck
 from ..buffer_steck import BufferSteck
-from ..broker_actions import TinkoffMarketOperations
+from ..broker_actions import TinkoffMarketOperations, TinkoffDataGetter
 
 from tinkoff.invest import CandleInterval, InstrumentType, HistoricCandle, AioRequestError, OrderType, OrderDirection
 from tinkoff.invest.services import Services
 from tinkoff.invest.utils import now, quotation_to_decimal, money_to_decimal
+from tinkoff.invest.exceptions import RequestError
 
 import time
 
@@ -119,20 +120,56 @@ class CandleTemplate(AssetTemplate):
                 while self.is_paused:
                     time.sleep(1)
                 break  # выход из цикла ожидания после паузы
+    
+    def check_corret_figi(self) -> None:
+        """
+        Функция для определения корректности figi на данный момент
+        и нахождения нового при необходимости
+        """
+
+        
+        try:
+            self.client.market_data.get_trading_status(figi=self.figi)
+        except RequestError:
+            self.logger.warning(message=f"{self.__repr__()} >> figi is not correct now. Try to now figi",
+                                module=__name__)
+            data_getter = TinkoffDataGetter(self.client, self.account_id)
+            figi = data_getter.get_figi(seek_ticker=self.name)
+            if figi is None:
+                self.logger.error(message=f"{self.__repr__()} >> ERROR FIGI, stop asset",
+                                module=__name__)
+                self.stop()
+                return
+            self.figi = figi
+        try:
+            self.client.market_data.get_trading_status(figi=self.figi)
+        except RequestError:
+            self.logger.error(message=f"{self.__repr__()} >> ERROR, attempt to get figi was unsuccessful, stop asset",
+                                module=__name__)
+            self.stop()
+            return
+        self.logger.info(message=f"{self.__repr__()} >> set figi: [{self.figi}]", module=__name__)
+        
 
     def main_loop(self) -> None:
         """ Главный цикл мониторинга актива """
         while True:
-            if self.stop_monitoring: break
+            # if self.stop_monitoring: break
 
             try:
                 self.wait_for_open_market()
+                
+                if self.stop_monitoring: break
                 self.get_historic_candles()
 
                 self.strategy.prepare_data(candles=self.candles)
                 signal = self.strategy.get_signal()
                 self.logger.info(message=f"{self.__repr__()} candle data processed", module=__name__)
                 self.action(signal)
+
+            except RequestError as ex:
+                self.logger.error(message=f"{self.__repr__()} error :: {ex}", module=__name__)
+                self.check_corret_figi()
 
             except AioRequestError as ex:
                 self.logger.error(message=f"{self.__repr__()} stop processing candle data: {ex}", module=__name__)
@@ -211,8 +248,16 @@ class CandleTemplate(AssetTemplate):
     def wait_for_open_market(self):
         """ Ожидание открытия торгов, если они недоступны """
         while True:
+            self._wait(1)
+            if self.stop_monitoring:
+                return
+
             try:
                 trading_data = self.client.market_data.get_trading_status(figi=self.figi)
+            except RequestError as ex:
+                self.logger.error(message=f"{self.__repr__()} error :: {ex}", module=__name__)
+                self.check_corret_figi()
+                continue
             except Exception as ex:
                 self.logger.error(message=f" {self.__repr__()} ERROR in getting status :: {ex}",
                                   module=__name__)
@@ -234,7 +279,6 @@ class CandleTemplate(AssetTemplate):
                     self.logger.info(message=f"{self.name}:[{self.figi}] market open", module=__name__)
                 return
 
-            self._wait(1)
             
 
 
