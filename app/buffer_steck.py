@@ -1,6 +1,30 @@
 from __future__ import annotations
 from pathlib import Path
 import datetime
+import configparser
+from .logger import Logger
+
+
+def get_last_date() -> datetime.datetime.date:
+    """ Просмотр последней сохраненной даты """
+    cfg_parser = configparser.ConfigParser()
+    cfg_parser.read("configs/start_app.ini")
+    try:
+        str_date = cfg_parser["WORK"]["last_date"]
+        date = datetime.datetime.strptime(str_date, "%Y-%m-%d").date()
+        
+    except Exception as ex:
+        Logger().error(message="Last date has been not found", module=__name__)
+        date = datetime.datetime.now().date()
+    return date
+
+def save_new_last_data(date: datetime.datetime.date) -> None:
+    """ Сохранение новой последней даты """
+    cfg_parser = configparser.ConfigParser()
+    cfg_parser.read("configs/start_app.ini")
+    cfg_parser["WORK"]["last_date"] = str(date)
+    with open("configs/start_app.ini", "w", encoding='utf-8') as file:
+        cfg_parser.write(file)
 
 
 class BufferSteck:
@@ -11,7 +35,7 @@ class BufferSteck:
     _queue: list[dict] = []
     is_active: bool = False
     buffer_folder: str = Path("app/buff")
-    last_date: datetime.date = datetime.datetime.now().date()
+    last_date: datetime.date = get_last_date()
 
     def __new__(cls, *args, **kwargs):
         if cls._instance is None:
@@ -35,6 +59,8 @@ class BufferSteck:
             date_now = datetime.datetime.now().date()
             if date_now != self.last_date:
                 self._clear_file(file_path)
+                self.last_date = date_now
+                save_new_last_data(date=date_now)
             
             self._check_file(file_path)
             msg = buff_data["message"]
