@@ -49,6 +49,18 @@ def get_owner_id() -> str:
     parser.read("configs/.configs.ini")
     return parser["TOKENS"]["owner_telegram_id"]
 
+def authorization(message) -> bool:
+    """
+    Функция сравнения id пишущего с ID полученного из конфигураций.
+    При совпадении возвращает True, иначе False
+    """
+    if str(message.from_user.id) == str(CLIENT_ID):
+        return True
+    LOGGER.error(message=f"CLIENT ID >> попытка использовать бота пользователем @{message.from_user.username} [{message.from_user.first_name}] id: {message.from_user.id}",
+                 module=__name__)
+    LOGGER.warning(message=f"message info\n\n{str(message)}", module=__name__)
+    return False
+
 
 token = get_token()
 bot = telebot.TeleBot(token)
@@ -188,13 +200,17 @@ def clear_save_files() -> None:
 
 @bot.message_handler(commands=['start'])
 def start(message):
+    if not authorization(message):
+        bot.send_message(message.chat.id, f"Пользователь @{message.from_user.username} не имеет доступа к функционалу", reply_markup=types.ReplyKeyboardRemove())
+        return
     global CLIENT_ID
-    print(message.chat.id)
     CLIENT_ID = message.chat.id
     bot.send_message(message.chat.id, "Управляюший трейдер-системой бот", reply_markup=main_menu)
 
 @bot.message_handler(func=lambda message: True)
 def other_messages(message):
+    if not authorization(message):
+        return
 
     if message.text == "приостановить":
         try:
