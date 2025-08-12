@@ -41,12 +41,18 @@ def get_token() -> str:
     """ Получение токена """
     parser = configparser.ConfigParser()
     parser.read("configs/.configs.ini")
-    return parser["TOKENS"]["telegram"]
+    return parser["TOKENS"]["telegram_bot_token"]
+
+def get_owner_id() -> str:
+    """ Получение id пользователя """
+    parser = configparser.ConfigParser()
+    parser.read("configs/.configs.ini")
+    return parser["TOKENS"]["owner_telegram_id"]
 
 
 token = get_token()
 bot = telebot.TeleBot(token)
-CLIENT_ID: str = ""
+CLIENT_ID: str = get_owner_id()
 
 main_menu = types.ReplyKeyboardMarkup(row_width=2)
 main_menu_btn_1 = types.KeyboardButton("приостановить")  # text="Статус", callback_data="status")
@@ -183,6 +189,7 @@ def clear_save_files() -> None:
 @bot.message_handler(commands=['start'])
 def start(message):
     global CLIENT_ID
+    print(message.chat.id)
     CLIENT_ID = message.chat.id
     bot.send_message(message.chat.id, "Управляюший трейдер-системой бот", reply_markup=main_menu)
 

@@ -131,7 +131,7 @@ class CandleTemplate(AssetTemplate):
         try:
             self.client.market_data.get_trading_status(figi=self.figi)
         except RequestError:
-            self.logger.warning(message=f"{self.__repr__()} >> figi is not correct now. Try to now figi",
+            self.logger.error(message=f"{self.__repr__()} >> figi is not correct now. Try to know figi",
                                 module=__name__)
             data_getter = TinkoffDataGetter(self.client, self.account_id)
             figi = data_getter.get_figi(seek_ticker=self.name)
@@ -168,7 +168,7 @@ class CandleTemplate(AssetTemplate):
                 self.action(signal)
 
             except RequestError as ex:
-                self.logger.error(message=f"{self.__repr__()} error :: {ex}", module=__name__)
+                self.logger.error(message=f"{self.__repr__()} error :: {ex.metadata.message}", module=__name__)
                 self.check_corret_figi()
 
             except AioRequestError as ex:
@@ -255,7 +255,7 @@ class CandleTemplate(AssetTemplate):
             try:
                 trading_data = self.client.market_data.get_trading_status(figi=self.figi)
             except RequestError as ex:
-                self.logger.error(message=f"{self.__repr__()} error :: {ex}", module=__name__)
+                self.logger.error(message=f"{self.__repr__()} error :: {ex.metadata.message}", module=__name__)
                 self.check_corret_figi()
                 continue
             except Exception as ex:
