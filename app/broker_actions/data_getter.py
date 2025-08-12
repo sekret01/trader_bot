@@ -83,4 +83,10 @@ class TinkoffDataGetter:
             })
         
         return report_data
+
+    def get_total_balance(self) -> float:
+        """ Функция получнения общей стоимости счета """
+        # total_amount_portfolio
+        data = self.client.operations.get_portfolio(account_id=self.account_id)
+        return float(money_to_decimal(data.total_amount_portfolio))
             

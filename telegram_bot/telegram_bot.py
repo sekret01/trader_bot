@@ -131,12 +131,17 @@ def get_balance_report() -> ...:
     """ Создание отчета о балансе счета и распределении активов на данный момент """
     bot.send_message(CLIENT_ID, f"ОТЧЕТ О СОСТОЯНИИ БАЛАНСА\n[{str(datetime.datetime.now())}]")
     report_data = DATA_GETTER.get_balance()
+    total_price = DATA_GETTER.get_total_balance()
+    bot.send_message(CLIENT_ID, f"Всего на счету: {round(total_price, 2)} руб")
     
     for instrument_type, instruments in report_data.items():
-        bot.send_message(CLIENT_ID, f"инструмент {instrument_type.upper()}")
+        # bot.send_message(CLIENT_ID, f"инструмент {instrument_type.upper()}")
+        instr_report = f"инструмент {instrument_type.upper()}\n\n"
         for instr in instruments:
-            rep_str = f"{instr["ticker"]} [{instr["figi"]}]\namount: {instr["amount"]}\n{instr["cur_price_for_one"]} руб >> {instr["cur_price"]} руб"
-            bot.send_message(CLIENT_ID, rep_str)
+            rep_str = f"> {instr["ticker"]} [{instr["figi"]}]\n    amount: {instr["amount"]}\n    {instr["cur_price_for_one"]} руб >> {instr["cur_price"]} руб"
+            # bot.send_message(CLIENT_ID, rep_str)
+            instr_report += rep_str
+        bot.send_message(CLIENT_ID, instr_report)
 
 @check_client_id
 def load_csv_reports() -> ...:
@@ -179,7 +184,7 @@ def clear_save_files() -> None:
 def start(message):
     global CLIENT_ID
     CLIENT_ID = message.chat.id
-    bot.send_message(message.chat.id, 'Welcome to trader bot!', reply_markup=main_menu)
+    bot.send_message(message.chat.id, "Управляюший трейдер-системой бот", reply_markup=main_menu)
 
 @bot.message_handler(func=lambda message: True)
 def other_messages(message):
@@ -199,23 +204,23 @@ def other_messages(message):
         # bot.reply_to(message, "Сервис запущен", reply_markdown=main_menu)
     
     elif message.text == "очистка логов":
-        bot.reply_to(message, "Очистка логов")
+        # bot.reply_to(message, "Очистка логов")
         clear_save_files()
 
     elif message.text == "отчет о балансе":
-        bot.reply_to(message, "отчет о балансе")
+        # bot.reply_to(message, "отчет о балансе")
         get_balance_report()
         
     elif message.text == "отчет об операциях":
-        bot.reply_to(message, "отчет об операциях")
+        # bot.reply_to(message, "отчет об операциях")
         get_market_report()
         
     elif message.text == "получить csv-отчеты":
-        bot.reply_to(message, "получить csv-отчеты")
+        # bot.reply_to(message, "получить csv-отчеты")
         load_csv_reports()
 
     elif message.text == "получить log-файл":
-        bot.reply_to(message, "получить log-файл")
+        # bot.reply_to(message, "получить log-файл")
         load_logs()
 
 
