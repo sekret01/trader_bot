@@ -174,7 +174,24 @@ class CandleTemplate(AssetTemplate):
             except AioRequestError as ex:
                 self.logger.error(message=f"{self.__repr__()} stop processing candle data: {ex}", module=__name__)
 
-            self._wait(self.check_interval)
+            # определение времени ожидания
+            delta_time = self.calculate_waiting_time()
+            self._wait(delta_time)
+
+    
+    def calculate_waiting_time(self) -> int:
+        """ Функция для определения времени ожидания """
+        # нужна для исключения задержек в получении свечей
+        cur_time = datetime.datetime.now()
+        hour = cur_time.hour
+        next_check_time = datetime.datetime(cur_time.year, cur_time.month, cur_time.day, cur_time.hour, 0, 0, 0)
+        while next_check_time <= cur_time:
+            next_check_time += datetime.timedelta(seconds=self.check_interval)
+        
+        extra_wait = 60 * 2  # доп время ожидания на случай задержек в API
+        delta = int((next_check_time - cur_time).total_seconds()) + extra_wait
+        self.logger.info(f"{self.__repr__()} >> next check time: {next_check_time + timedelta(seconds=extra_wait)}, wait: {delta}", __name__)
+        return delta
 
 
     def action(self, signal: int) -> None:
