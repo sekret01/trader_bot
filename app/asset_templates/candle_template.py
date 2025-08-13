@@ -65,6 +65,7 @@ class CandleTemplate(AssetTemplate):
         self.buffer_steck = BufferSteck()
 
         self.candles: list[HistoricCandle] = []
+        self.last_date_check_candles: datetime.datetime | None = None
         # self.operations_buff: list = []
         self.is_bought: bool = False
         self.is_waiting_open: bool = False
@@ -250,17 +251,26 @@ class CandleTemplate(AssetTemplate):
         self.logger.info(message=f"{self.__repr__()} start getting candles",
                          module=__name__)
         i = 0
+        if self.last_date_check_candles is None:
+            # просто отнимаем количество заданных дней
+            delta = timedelta(days=self.days_back)
+        else:
+            # отнимаем то количество, которое прошло с последней проверки свечей + интервална всякий
+            pause_date = datetime.datetime.now() - self.last_date_check_candles
+            delta = timedelta(days=pause_date.days, seconds=pause_date.seconds + self.check_interval)
+
         for candle in self.client.get_all_candles(
-            from_=now() - timedelta(days=self.days_back),
+            from_=now() - delta,
             to=now(),
             figi=self.figi,
             interval=self.timeframe
         ):
             if not candle in self.candles:
-                # if candle.is_complete:
-                self.candles.append(candle)
-                i += 1
+                if candle.is_complete:  # было убрано
+                    self.candles.append(candle)
+                    i += 1
         self.logger.info(message=f"{self.__repr__()} candles got:{i}", module=__name__)
+        self.last_date_check_candles = datetime.datetime.now()
 
     def wait_for_open_market(self):
         """ Ожидание открытия торгов, если они недоступны """

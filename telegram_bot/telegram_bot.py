@@ -106,7 +106,7 @@ def pause_service() -> None:
         CONTROL_HUB.pause_strategise()
         main_menu.keyboard[0][0]["text"] = "возобновить"
         bot.send_message(CLIENT_ID, "Сервис приостановлен", reply_markup=main_menu)
-        LOGGER.info(message="TG-BOT >> STOP SERVICE", module=f"{__name__}.stop_service")
+        LOGGER.info(message="TG-BOT >> PAUSED SERVICE", module=f"{__name__}.stop_service")
 
 @check_client_id
 def resume_service() -> None:
