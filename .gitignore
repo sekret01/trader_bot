@@ -9,6 +9,11 @@ configs/status_save.json
 test_modules
 test_run_modules.py
 test_main.py
+trash
+app/asset_templates/strategies/*
+!app/asset_templates/strategies/__init__.py
+!app/asset_templates/strategies/_base_strategy.py
+!app/asset_templates/strategies/trendfolling_st.py
 
 # report files
 reports/market_data.csv
