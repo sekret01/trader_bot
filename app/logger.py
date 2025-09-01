@@ -30,9 +30,10 @@ class Logger:
         if self.stream_out:
             print(f"[{datetime.datetime.now().date()}  {self.get_time(datetime.datetime.now())}] --INFO-- [{module}]: {message}")
 
-    def error(self, message: str, module: str):
+    def error(self, message: str, module: str, handler_activate: bool = True):
         self.logger.error(module + " > " + message if module else message)
-        ErrorHandler().error(msg=module + "\n\n" + message)
+        if handler_activate:
+            ErrorHandler().error(msg=module + "\n\n" + message)
         if self.stream_out:
             print(f"[{datetime.datetime.now().date()}  {self.get_time(datetime.datetime.now())}] !!-ERROR-!! [{module}]: {message}")
 

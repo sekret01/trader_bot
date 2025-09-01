@@ -3,9 +3,12 @@
 """
 
 import telebot
+from telebot.apihelper import ApiTelegramException
+from telebot import types
+
 import configparser
 import datetime
-from telebot import types
+import time
 from pathlib import Path
 
 from app import ControlHub
@@ -266,15 +269,37 @@ def other_messages(message):
 
 
 def start_bot():
-    print("start telegram bot")
-    LOGGER.info(message=f"TG-BOT >> start polling bot", module=__name__)
-    if get_work_status() == '1':
-        main_menu.keyboard[0][0]["text"] = "приостановить"
-    bot.polling(non_stop=True)
+    while True:
+        try:
+            print("start telegram bot")
+            LOGGER.info(message=f"TG-BOT >> start polling bot", module=__name__)
+            if get_work_status() == '1':
+                main_menu.keyboard[0][0]["text"] = "приостановить"
+            bot.polling(non_stop=True)
+            raise KeyboardInterrupt  # для вывода ошибки в start_app.py при ctrl+C
+
+        # except KeyboardInterrupt:
+        #     print("KeyboardInterrupt")
+        #     return
+
+        except ApiTelegramException as ex:
+            LOGGER.error(message=f"TG-BOT >> ERROR api-telegram-ex [start_bot] :: {ex}", module=__name__, handler_activate=False)
+            bot.stop_polling()
+            LOGGER.warning(message=f"TG-BOT >> stop pooling bot, wait 10 sec", module=__name__)
+            time.sleep(10)
+        except Exception as ex:
+            LOGGER.error(message=f"TG-BOT >> ERROR [start_bot] :: {ex}", module=__name__, handler_activate=False)
+            bot.stop_polling()
+            LOGGER.warning(message=f"TG-BOT >> stop pooling bot, wait 10 sec", module=__name__)
+            time.sleep(10)
+
 
 def print_error(msg: str) -> None:
-    bot.send_message(CLIENT_ID, "СБОЙ В СИСТЕМЕ")
-    bot.send_message(CLIENT_ID, msg)
+    try:
+        bot.send_message(CLIENT_ID, "СБОЙ В СИСТЕМЕ")
+        bot.send_message(CLIENT_ID, msg)
+    except Exception as ex:
+        LOGGER.error(message=f"TG-BOT >> ERROR [print_error func] :: {ex}", module=__name__, handler_activate=False)
 
 def stop_bot():
     print("stop telegram bot")

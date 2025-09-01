@@ -3,6 +3,7 @@
 .idea
 .configs.ini
 configs/status_save.json
+configs/asset_config.json
 *__pycache__*
 
 # tests

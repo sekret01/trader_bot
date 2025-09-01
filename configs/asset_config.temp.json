@@ -1,0 +1,32 @@
+[
+  {
+    "name": "TRUR",
+    "figi": "BBG000000001",
+    "amount": 110,
+    "days_back": 30,
+    "timeframe": 9,
+    "check_interval": 1800,
+    "type": 4,
+    "strategy": "trendfollowing",
+    "template": "candle",
+    "construct_data": {
+      "MA_small": 20,
+      "MA_long": 50
+    }
+  },
+  {
+    "name": "TRND",
+    "figi": "TCS00A10B0G9",
+    "amount": 110,
+    "days_back": 30,
+    "timeframe": 9,
+    "check_interval": 1800,
+    "type": 4,
+    "strategy": "trendfollowing",
+    "template": "candle",
+    "construct_data": {
+      "MA_small": 50,
+      "MA_long": 100
+    }
+  }
+]
