@@ -12,8 +12,10 @@
 
 
 import configparser
+import sys
 import threading
 import time
+import signal
 from decimal import Decimal
 
 from tinkoff.invest import Client, MoneyValue
@@ -38,6 +40,7 @@ PARSER = configparser.ConfigParser()
 LOGGER = Logger()
 SANDBOX_MANAGER: SandboxManager = None
 ERROR_HANDLER = ErrorHandler()
+control_hub: ControlHub = None
 
 
 def get_configs() -> dict:
@@ -74,6 +77,8 @@ def loop():
         time.sleep(1)
 
 def main():
+    global SANDBOX_MANAGER, control_hub
+
     LOGGER.info(message="LAUNCH <start_app> FOR AUTO START BOT", module=__name__)
 
     configs = get_configs()
@@ -132,6 +137,20 @@ def main():
         stop_bot()
         control_hub.stop_strategies()
         return
+
+def exit_program(_signal, _frame):
+    """ Обработка сигналов прерывания программы """
+    global SANDBOX_MANAGER, control_hub
+
+    LOGGER.info(message=f"MAIN :: get termite signal >> CLOSE APP", module=__name__)
+    if (not SANDBOX_MANAGER is None) and (SANDBOX_MANAGER.on_delete):
+        SANDBOX_MANAGER.close_current_sandbox()
+    stop_bot()
+    control_hub.stop_strategies()
+    sys.exit()
+
+
+signal.signal(signal.SIGTERM, exit_program)
 
 if __name__ == "__main__":
     main()
