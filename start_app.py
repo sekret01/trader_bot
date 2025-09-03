@@ -52,6 +52,8 @@ def get_configs() -> dict:
     configs["client_type"] = parser["START_PARAMETERS"]["client_type"]
     configs["check_save"] = parser["START_PARAMETERS"]["check_save"]
     configs["once_test_sandbox"] = parser["START_PARAMETERS"]["once_test_sandbox"]
+    configs["connect_to_previous"] = parser["START_PARAMETERS"]["connect_to_previous"]
+    configs["last_account_id"] = parser["WORK"]["last_account_id"]
 
     return configs
 
@@ -77,6 +79,7 @@ def loop():
         time.sleep(1)
 
 def main():
+    """ Запуск всего сервиса """
     global SANDBOX_MANAGER, control_hub
 
     LOGGER.info(message="LAUNCH <start_app> FOR AUTO START BOT", module=__name__)
@@ -89,19 +92,30 @@ def main():
     client_type, token = res
     with client_type(token=token) as client:
         account_id = ""
+        connect_to_previous = False
+
         if client_type == SandboxClient:
             SANDBOX_MANAGER = SandboxManager(client)
-            SANDBOX_MANAGER.open_new_sandbox(delete_after_use=configs["once_test_sandbox"] == "1")
+            if configs["connect_to_previous"] == "1":
+                SANDBOX_MANAGER.connect_sandbox_account(configs["last_account_id"])
+                connect_to_previous = True
+            if configs["connect_to_previous"] == "0" or SANDBOX_MANAGER.account_id is None:
+                SANDBOX_MANAGER.open_new_sandbox(delete_after_use=configs["once_test_sandbox"] == "1")
+
             account_id = SANDBOX_MANAGER.account_id
         else:
             account_id = client.users.get_accounts().accounts[0].id  # расчет на то что токен для одного счета
         control_hub = ControlHub(client, account_id)
 
-        # активы собираются либо по листу конфигураций,
-        # либо по последним сохраненным статусам
+        # активы собираются по листу конфигураций;
+        # при подключении к существующему account_id необходимо
+        # сделать проверку на соответствие данных об активах
+
         if configs["check_save"] == '0':
             LOGGER.info(message="Data will be load from configs", module=__name__)
-            control_hub.set_strategies()
+            control_hub.set_strategies(connect_to_previous=connect_to_previous)
+
+        # !!! удалить
         elif configs["check_save"] == '1':
             LOGGER.info(message="Data will be load from save_status file", module=__name__)
             # добавить метод для сборки данных из файла сохранения

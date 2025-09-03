@@ -58,4 +58,8 @@ class SandboxManager:
                          module=__name__)
         self.client.sandbox.close_sandbox_account(account_id=self.account_id)
 
+    def connect_sandbox_account(self, account_id: str):
+        for acc in self.client.sandbox.get_sandbox_accounts().accounts:
+            if acc.id == account_id:
+                self.account_id = account_id
 

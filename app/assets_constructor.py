@@ -8,9 +8,9 @@ CandleTemplate
 )
 
 # strategies
+from .asset_templates import strategies_dict
 from .asset_templates import (
-Strategy,
-TrendFollowing
+Strategy
 )
 
 from .logger import Logger
@@ -40,12 +40,10 @@ class AssetsConstructor:
             "candle": CandleTemplate
         }
 
-        # расширять по мере добавления новых стратегий
-        self.strategies: dict[str, type[Strategy]] = {
-            "trendfollowing": TrendFollowing
-        }
+        self.strategies: dict[str, type[Strategy]] = strategies_dict
 
-        # расширять по мере добавления новых стратегий
+
+        # расширять по мере добавления новых шаблонов
         self.router_by_functions: dict[type[AssetTemplate], callable] = {
             CandleTemplate: self.build_candle_template
         }

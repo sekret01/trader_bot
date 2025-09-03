@@ -4,7 +4,7 @@ import datetime
 from datetime import timedelta
 from typing import Literal
 
-from .strategies import TrendFollowing
+# from .strategies import TrendFollowing
 from ..logger import Logger
 from .strategies import Strategy
 from ._asset_template import AssetTemplate
@@ -329,26 +329,30 @@ class CandleTemplate(AssetTemplate):
         }
 
     @staticmethod
-    def from_json(data: dict, client: Services) -> CandleTemplate:
+    def from_json(data: dict, client: Services):
         """ Преобразование json в объект CandleTemplate """
-        asset = CandleTemplate(
-            client=client,
-            figi=data["figi"],
-            name=data["name"],
-            amount=data["amount"],
-            days_back=data["days_back"],
-            timeframe=data["timeframe"],
-            check_interval=data["check_interval"],
-            type_=data["type_"],
-            strategy=TrendFollowing.from_json(data["strategy"]),  # ИЗМЕНИТЬ НА АВТООПРЕДЕЛЕНИЕ СТРАТЕГИИ
-        )
+        # убран из-за ненадобности
 
-        asset.account_id = data["account_id"]
-        asset.is_bought = data["is_bought"]
-        asset.is_waiting_open = data["is_waiting_open"]
-        asset.wait_time = data["wait_time"]
-        asset.stop_monitoring = data["stop_monitoring"]
-        asset.logger = Logger()
-        asset.saver = CSV_Saver(client)
-
-        return asset
+        # asset = CandleTemplate(
+        #     client=client,
+        #     account_id=data["account_id"],
+        #     figi=data["figi"],
+        #     name=data["name"],
+        #     amount=data["amount"],
+        #     days_back=data["days_back"],
+        #     timeframe=data["timeframe"],
+        #     check_interval=data["check_interval"],
+        #     type_=data["type_"],
+        #     strategy=TrendFollowing.from_json(data["strategy"]),  # ИЗМЕНИТЬ НА АВТООПРЕДЕЛЕНИЕ СТРАТЕГИИ
+        # )
+        #
+        # # asset.account_id = data["account_id"]
+        # asset.is_bought = data["is_bought"]
+        # asset.is_waiting_open = data["is_waiting_open"]
+        # asset.wait_time = data["wait_time"]
+        # asset.stop_monitoring = data["stop_monitoring"]
+        # asset.logger = Logger()
+        # asset.saver = CSV_Saver(client, data["account_id"])
+        #
+        # return asset
+        pass

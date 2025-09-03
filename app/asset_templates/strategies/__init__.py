@@ -1,2 +1,2 @@
 from ._base_strategy import Strategy
-from .trendfolling_st import TrendFollowing
+from ._strategy_distributor import strategies_dict

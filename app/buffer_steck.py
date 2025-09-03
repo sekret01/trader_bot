@@ -43,7 +43,7 @@ class BufferSteck:
         return cls._instance
 
 
-    def put_message(self, file_n: str, message: dict) -> None:
+    def put_message(self, file_n: str, message: str) -> None:
         """ Функция для упаковки сообщения в очередь сообщений """
         self._queue.append({"file": file_n, "message": message})
         if self.is_active:

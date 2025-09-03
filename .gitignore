@@ -9,9 +9,14 @@ configs/asset_config.json
 # tests
 test_modules
 test_run_modules.py
+test_analysis.py
 test_main.py
 trash
+
+# own modules
+app/asset_templates/strategies/_strategy_distributor.py
 app/asset_templates/strategies/*
+!app/asset_templates/strategies/_strategy_distributor.temp.py
 !app/asset_templates/strategies/__init__.py
 !app/asset_templates/strategies/_base_strategy.py
 !app/asset_templates/strategies/trendfolling_st.py

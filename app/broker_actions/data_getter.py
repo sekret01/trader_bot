@@ -96,6 +96,15 @@ class TinkoffDataGetter:
         
         return report_data
 
+    def get_balance_simple(self, without_currency: bool = True) -> dict:
+        """ Возвращает данные о текущем балансе по активам в виде {figi: amount} """
+        report_data = {}
+        data = self.client.operations.get_portfolio(account_id=self.account_id)
+        for pos in data.positions:
+            if pos.instrument_type != "currency":
+                report_data[pos.figi] = int(float(quotation_to_decimal(pos.quantity)))
+        return report_data
+
     def get_total_balance(self) -> float:
         """ Функция получнения общей стоимости счета """
         # total_amount_portfolio
