@@ -110,4 +110,12 @@ class TinkoffDataGetter:
         # total_amount_portfolio
         data = self.client.operations.get_portfolio(account_id=self.account_id)
         return float(money_to_decimal(data.total_amount_portfolio))
-            
+
+    def get_asset_last_price(self, figi: str) -> float | None:
+        """ Получение последней зафиксированной цены актива """
+        try:
+            data = self.client.market_data.get_last_prices(figi=["TCS00A10B0G9"])
+            return float(quotation_to_decimal(data.last_prices[0].price))
+        except Exception as ex:
+            self.logger.error(message=f"GET_LAST_PRICE ERROR :: {ex}", module=__name__)
+            return None
