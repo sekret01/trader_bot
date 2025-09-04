@@ -54,6 +54,7 @@ class CandleTemplate(AssetTemplate):
         self.figi: str = figi
         self.name: str = name
         self.amount: int = amount
+        self.amount_auto_transmission: int = 0
         self.days_back: int = days_back
         self.timeframe: CandleInterval = timeframe
         self.check_interval: int = check_interval

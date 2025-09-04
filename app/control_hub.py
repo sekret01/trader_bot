@@ -6,6 +6,7 @@ import configparser
 from tinkoff.invest import Client, AioRequestError, InstrumentType, CandleInterval
 from tinkoff.invest.sandbox.client import SandboxClient
 from tinkoff.invest.services import Services, SandboxService
+from tinkoff.invest.utils import quotation_to_decimal
 
 from . import Strategy
 from .asset_templates import AssetTemplate, CandleTemplate
@@ -89,7 +90,7 @@ class ControlHub:
 
         self.set_paused_status(0)
 
-    def set_strategies(self, connect_to_previous: bool) -> None:
+    def set_strategies(self, connect_to_previous: bool, auto_transmission: bool) -> None:
         """
         Конструктор стратегий. Собирает strategies_block
         по конфигурационному листу, либо по последним
@@ -100,6 +101,10 @@ class ControlHub:
         if connect_to_previous:
             self.logger.info(message=f"data will be pulled from the account [{self.account_id}] after the constructor",
                               module=__name__)
+
+        if auto_transmission:
+            self.logger.info(message=f"auto transmission is activated",
+                             module=__name__)
 
         if len(self.strategies_block) > 0:
             self.logger.error(message=f"existing data on assets to be destroyed has been found!!!",
@@ -136,33 +141,102 @@ class ControlHub:
                 self.logger.error(message=f"error with adding asset [{asset["name"]}{asset["figi"]}] in strategy {asset["strategy"]} :: {ex}",
                                   module=__name__)
 
-            if connect_to_previous:
-                self.logger.info(
-                    message=f"start pulling data for synchronization",
-                    module=__name__)
-                tink_data_getter = TinkoffDataGetter(self.client, self.account_id)
+        if connect_to_previous:
+            self.logger.info(
+                message=f"start pulling data for synchronization",
+                module=__name__)
+            tink_data_getter = TinkoffDataGetter(self.client, self.account_id)
 
-                pulled_data = tink_data_getter.get_balance_simple(without_currency=True)
-                for figi, amount in pulled_data:
-                    if figi in general_assets_information.keys():
-                        edit_asset = general_assets_information[figi]
-                        edit_asset.is_bought = True
-                        self.logger.info(message=f"PULL DATA: {figi} >> bought {amount}. Set status",
-                                         module=__name__)
-                        if edit_asset.amount != amount:
-                            self.logger.warning(message=f"amount of [{edit_asset.name}{edit_asset.figi}]: {edit_asset.amount}, fact: {amount}. Amount has been edited",
-                                                module=__name__)
-                            edit_asset.amount = amount
-                self.logger.info(
-                    message=f"data has been synchronized",
-                    module=__name__)
+            pulled_data = tink_data_getter.get_balance_simple(without_currency=True)
+            for figi, amount in pulled_data.items():
+                if figi in general_assets_information.keys():
+                    edit_asset = general_assets_information[figi]
+                    edit_asset.is_bought = True
+                    self.logger.info(message=f"PULL DATA: {figi} >> bought {amount}. Set status",
+                                     module=__name__)
+                    if edit_asset.amount != amount:
+                        self.logger.warning(message=f"amount of [{edit_asset.name}{edit_asset.figi}]: {edit_asset.amount}, fact: {amount}. Amount has been edited",
+                                            module=__name__)
+                        edit_asset.amount = amount
+            self.logger.info(
+                message=f"data has been synchronized",
+                module=__name__)
 
+        if auto_transmission:
+            self._auto_transmission_amount(general_assets_information)
 
-            self.ready_for_work = True
-            if i == 0:
-                self.ready_for_work = False
-                self.logger.warning(message=f"there is not a single asset to monitor",
+        self.ready_for_work = True
+        if i == 0:
+            self.ready_for_work = False
+            self.logger.warning(message=f"there is not a single asset to monitor",
+                             module=__name__)
+
+    def _get_current_prices(self, assets_dict: dict[str, AssetTemplate]) -> dict[str, float]:
+        """ Получение последней цены для каждого актива по figi """
+        res = {}
+        for figi in assets_dict.keys():
+            try:
+                price_data = self.client.market_data.get_last_prices(figi=[figi])
+                res[figi] = float(quotation_to_decimal(price_data.last_prices[0].price))
+            except Exception as ex:
+                self.logger.error(message=f"_GET_CURRENT_PRICE for [{figi}] ERROR :: {ex}", module=__name__)
+                pass
+        return res
+
+    def _auto_transmission_amount(self, asset_dict: dict[str, AssetTemplate]) -> None:
+        """ Автоматическое равное распределение количества каждого актива """
+
+        self.logger.info(
+            message=f"AUTO_TRANSMISSION > start auto transmission assets amount",
+            module=__name__)
+        all_asset_quantity = len(asset_dict)
+        accept_money = self.get_money_for_trading
+
+        if not accept_money:
+            raise ValueError("incorrect value [money_for_trading] in start_app.ini")
+
+        # поиск ненайденных активов в списке последних цен
+        assets_cur_prices = self._get_current_prices(assets_dict=asset_dict)
+        not_found = set(asset_dict.keys()).difference(set(assets_cur_prices))
+        for not_found_figi in not_found:
+            self.logger.warning(message=f"NOT FOUND PRICE for [{not_found_figi}], delete it from asset list",
+                                module=__name__)
+            asset_dict.pop(not_found_figi)
+        self._delete_asset_from_system(figi_list=list(not_found))
+
+        # просмотр уже купленных активов для корректировки цен
+        for figi, asset in asset_dict.items():
+            if asset.is_bought:
+                self.logger.info(message=f"AUTO_TRANSMISSION > asset {asset.__repr__()} has already been purchased: amount {asset.amount}, total {round(asset.amount * assets_cur_prices[figi], 2)}",
                                  module=__name__)
+                accept_money -= int(round(asset.amount * assets_cur_prices[figi], 0))
+                all_asset_quantity -= 1
+        self.logger.info(message=f"AUTO_TRANSMISSION > accept_money = {accept_money}", module=__name__)
+
+        # распределение количества
+        money_for_one_part = int(accept_money // all_asset_quantity)
+        for figi, cur_price in assets_cur_prices.items():
+            accept_amount = int(money_for_one_part // cur_price)
+            edit_asset = asset_dict[figi]
+            if not edit_asset.is_bought:
+                self.logger.info(message=f"AUTO_TRANSMISSION > asset {edit_asset.__repr__()} set amount: {accept_amount}, total_price {round(accept_amount * cur_price, 2)}",
+                                 module=__name__)
+                edit_asset.amount_auto_transmission = accept_amount
+                edit_asset.amount = accept_amount
+
+        self.logger.info(
+            message=f"AUTO_TRANSMISSION > end auto transmission",
+            module=__name__)
+
+
+    def _delete_asset_from_system(self, figi_list: list[str]) -> None:
+        """ Удаление активов по figi из текущей системы мониторинга """
+        for strategy, assets in self.strategies_block.items():
+            for asset in assets:
+                if asset.figi in figi_list:
+                    self.strategies_block[strategy].remove(asset)
+                    self.logger.info(message=f"asset {asset.__repr__()} has been deleted",
+                                     module=__name__)
 
 
     def set_last_account_id(self) -> None:
@@ -188,6 +262,19 @@ class ControlHub:
             prs["WORK"]["paused"] = str(status)
             with open("configs/start_app.ini", 'w') as file:
                 prs.write(file)
+
+    @property
+    def get_money_for_trading(self) -> int | None:
+        """ Получить разрешенное количество денег для проведения операций """
+        prs = configparser.ConfigParser()
+        prs.read("configs/start_app.ini")
+        try:
+            res = int(prs["START_PARAMETERS"]["money_for_trading"])
+            return res
+        except Exception as ex:
+            self.logger.error(message=f"GET_MONEY_TRADING ERROR :: {ex}", module=__name__)
+            return None
+
 
     @property
     def get_work_status(self) -> Literal['0', '1']:

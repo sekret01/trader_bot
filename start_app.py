@@ -54,6 +54,7 @@ def get_configs() -> dict:
     configs["once_test_sandbox"] = parser["START_PARAMETERS"]["once_test_sandbox"]
     configs["connect_to_previous"] = parser["START_PARAMETERS"]["connect_to_previous"]
     configs["last_account_id"] = parser["WORK"]["last_account_id"]
+    configs["auto_transmission"] = parser["START_PARAMETERS"]["auto_transmission"]
 
     return configs
 
@@ -111,9 +112,19 @@ def main():
         # при подключении к существующему account_id необходимо
         # сделать проверку на соответствие данных об активах
 
+        auto_transmission = False
+        if configs["auto_transmission"] == '1':
+            auto_transmission = True
+
         if configs["check_save"] == '0':
-            LOGGER.info(message="Data will be load from configs", module=__name__)
-            control_hub.set_strategies(connect_to_previous=connect_to_previous)
+            try:
+                LOGGER.info(message="Data will be load from configs", module=__name__)
+                control_hub.set_strategies(connect_to_previous=connect_to_previous, auto_transmission=auto_transmission)
+            except Exception as ex:
+                LOGGER.error(message=f"SET_STRATEGIES ERROR :: {ex}", module=__name__)
+                LOGGER.warning(message="stop process with error", module=__name__)
+                exit_program(None, None)
+
 
         # !!! удалить
         elif configs["check_save"] == '1':
