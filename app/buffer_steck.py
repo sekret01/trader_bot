@@ -70,7 +70,7 @@ class BufferSteck:
 
         self.is_active = False
 
-    def _check_file(self, file_path: str) -> None:
+    def _check_file(self, file_path: Path) -> None:
         """ Проверка существования файла сохранения и правильности его данных """
         if not file_path.exists():
             file_path.touch()
